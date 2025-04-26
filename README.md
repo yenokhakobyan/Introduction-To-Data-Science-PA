@@ -27,8 +27,7 @@ More sessions and practical projects will be added soon.
 |----------------------|-------------|
 | `/lecturer_notes/`    | Detailed lecture notes and explanations |
 | `/notebooks/`         | Jupyter notebooks with code examples and exercises |
-| `/datasets/`          | (Coming soon) Example datasets for practice |
-| `requirements.txt`    | (Coming soon) List of required Python libraries |
+| `/data/`              | (Coming soon) Example datasets for practice |
 
 ---
 

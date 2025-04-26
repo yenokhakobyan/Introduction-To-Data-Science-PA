@@ -1,0 +1,22 @@
+# Byte-compiled files
+__pycache__/
+*.py[cod]
+*.so
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+
+# Virtual environments
+venv/
+ds-venv/
+.env/
+.venv/
+ENV/
+env/
+ds/
+
+# VSCode settings (optional)
+.vscode/
+
+# MacOS junk files
+.DS_Store

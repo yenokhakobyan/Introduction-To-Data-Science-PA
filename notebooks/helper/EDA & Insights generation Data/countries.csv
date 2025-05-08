@@ -1,0 +1,251 @@
+country_name,country_code,region,country_code_alpha3
+Liechtenstein,li,Europe,lie
+Lithuania,lt,Europe,ltu
+Luxembourg,lu,Europe,lux
+Macao,mo,China,mac
+"Macedonia, the Former Yugoslav Republic of",mk,Europe,mkd
+Madagascar,mg,Africa,mdg
+Malawi,mw,Africa,mwi
+Malaysia,my,Asia & Pacific,mys
+Maldives,mv,Indian Subcontinent,mdv
+Mali,ml,Africa,mli
+Malta,mt,Europe,mlt
+Marshall Islands,mh,Asia & Pacific,mhl
+Martinique,mq,South/Latin America,mtq
+Mauritania,mr,Arab Speaking,mrt
+Mauritius,mu,Africa,mus
+Mayotte,yt,Africa,myt
+Mexico,mx,Mexico,mex
+"Micronesia, Federated States of",fm,Asia & Pacific,fsm
+"Moldova, Republic of",md,Europe,mda
+Monaco,mc,Europe,mco
+Mongolia,mn,Asia & Pacific,mng
+Montenegro,me,Europe,mne
+Montserrat,ms,South/Latin America,msr
+Morocco,ma,Arab Speaking,mar
+Mozambique,mz,Africa,moz
+Myanmar,mm,Asia & Pacific,mmr
+Namibia,na,Africa,nam
+Nauru,nr,Asia & Pacific,nru
+Nepal,np,Indian Subcontinent,npl
+Netherlands,nl,Europe,nld
+New Caledonia,nc,Asia & Pacific,ncl
+New Zealand,nz,Asia & Pacific,nzl
+Nicaragua,ni,South/Latin America,nic
+Niger,ne,Africa,ner
+Nigeria,ng,Africa,nga
+Niue,nu,Asia & Pacific,niu
+Norfolk Island,nf,Asia & Pacific,nfk
+Northern Mariana Islands,mp,Asia & Pacific,mnp
+Norway,no,Nordic,nor
+Oman,om,Arab Speaking,omn
+Pakistan,pk,Indian Subcontinent,pak
+Palau,pw,Asia & Pacific,plw
+"Palestine, State of",ps,Arab Speaking,pse
+Panama,pa,South/Latin America,pan
+Papua New Guinea,pg,Asia & Pacific,png
+Paraguay,py,South/Latin America,pry
+Peru,pe,South/Latin America,per
+Philippines,ph,Philippines,phl
+Pitcairn,pn,Asia & Pacific,pcn
+Poland,pl,Europe,pol
+Portugal,pt,Europe,prt
+Puerto Rico,pr,South/Latin America,pri
+Qatar,qa,Arab Speaking,qat
+Reunion,re,Asia & Pacific,reu
+Romania,ro,Europe,rou
+Russian Federation,ru,Russian Federation,rus
+Rwanda,rw,Africa,rwa
+Saint Barthelemy,bl,South/Latin America,blm
+"Saint Helena, Ascension and Tristan da Cunha",sh,South/Latin America,shn
+Saint Kitts and Nevis,kn,South/Latin America,kna
+Saint Lucia,lc,South/Latin America,lca
+Saint Martin (French part),mf,South/Latin America,maf
+Saint Pierre and Miquelon,pm,North America,spm
+Saint Vincent and the Grenadines,vc,South/Latin America,vct
+Samoa,ws,Asia & Pacific,wsm
+San Marino,sm,Europe,smr
+Sao Tome and Principe,st,Africa,stp
+Saudi Arabia,sa,Arab Speaking,sau
+Senegal,sn,Africa,sen
+Serbia,rs,Europe,srb
+Seychelles,sc,Africa,syc
+Sierra Leone,sl,Africa,sle
+Singapore,sg,Asia & Pacific,sgp
+Sint Maarten (Dutch part),sx,South/Latin America,sxm
+Slovakia,sk,Europe,svk
+Slovenia,si,Europe,svn
+Solomon Islands,sb,Asia & Pacific,slb
+Somalia,so,Arab Speaking,som
+South Africa,za,Africa,zaf
+South Georgia and the South Sandwich Islands,gs,South/Latin America,sgs
+South Sudan,ss,Africa,ssd
+Spain,es,Spain,esp
+Sri Lanka,lk,Indian Subcontinent,lka
+Sudan,sd,Arab Speaking,sdn
+Suriname,sr,South/Latin America,sur
+Svalbard and Jan Mayen,sj,Europe,sjm
+Swaziland,sz,Africa,swz
+Sweden,se,Nordic,swe
+Switzerland,ch,DACH,che
+Syrian Arab Republic,sy,Asia & Pacific,syr
+"Taiwan, Province of China",tw,China,twn
+Tajikistan,tj,Asia & Pacific,tjk
+"Tanzania, United Republic of",tz,Africa,tza
+Thailand,th,Thailand,tha
+Timor-Leste,tl,Asia & Pacific,tls
+Togo,tg,Africa,tgo
+Tokelau,tk,Asia & Pacific,tkl
+Tonga,to,Asia & Pacific,ton
+Trinidad and Tobago,tt,South/Latin America,tto
+Tunisia,tn,Arab Speaking,tun
+Turkey,tr,Europe,tur
+Turkmenistan,tm,Asia & Pacific,tkm
+Turks and Caicos Islands,tc,South/Latin America,tca
+Tuvalu,tv,Asia & Pacific,tuv
+Uganda,ug,Africa,uga
+Ukraine,ua,Europe,ukr
+United Arab Emirates,ae,Arab Speaking,are
+United Kingdom,gb,United Kingdom and Ireland,gbr
+United States,us,United States,usa
+United States Minor Outlying Islands,um,United States,umi
+Uruguay,uy,South/Latin America,ury
+Uzbekistan,uz,Asia & Pacific,uzb
+Vanuatu,vu,Asia & Pacific,vut
+"Venezuela, Bolivarian Republic of",ve,South/Latin America,ven
+Viet Nam,vn,Viet Nam,vnm
+"Virgin Islands, British",vg,South/Latin America,vgb
+"Virgin Islands, U.S.",vi,South/Latin America,vir
+Wallis and Futuna,wf,Asia & Pacific,wlf
+Western Sahara,eh,Africa,esh
+Yemen,ye,Arab Speaking,yem
+Zambia,zm,Africa,zmb
+Zimbabwe,zw,Africa,zwe
+Afghanistan,af,Asia & Pacific,afg
+Aland Islands,ax,Europe,ala
+Albania,al,Europe,alb
+Algeria,dz,Arab Speaking,dza
+American Samoa,as,Asia & Pacific,asm
+Andorra,ad,Europe,and
+Angola,ao,Africa,ago
+Anguilla,ai,South/Latin America,aia
+Antarctica,aq,Asia & Pacific,ata
+Antigua and Barbuda,ag,South/Latin America,atg
+Argentina,ar,Argentina,arg
+Armenia,am,Europe,arm
+Aruba,aw,South/Latin America,abw
+Australia,au,Asia & Pacific,aus
+Austria,at,DACH,aut
+Azerbaijan,az,Asia & Pacific,aze
+Bahamas,bs,South/Latin America,bhs
+Bahrain,bh,Arab Speaking,bhr
+Bangladesh,bd,Indian Subcontinent,bgd
+Barbados,bb,South/Latin America,brb
+Belarus,by,Europe,blr
+Belgium,be,Europe,bel
+Belize,bz,South/Latin America,blz
+Benin,bj,Africa,ben
+Bermuda,bm,North America,bmu
+Bhutan,bt,Indian Subcontinent,btn
+"Bolivia, Plurinational State of",bo,South/Latin America,bol
+"Bonaire, Sint Eustatius and Saba",bq,South/Latin America,bes
+Bosnia and Herzegovina,ba,Europe,bih
+Botswana,bw,Africa,bwa
+Bouvet Island,bv,South/Latin America,bvt
+Brazil,br,Brazil,bra
+British Indian Ocean Territory,io,Asia & Pacific,iot
+Brunei Darussalam,bn,Asia & Pacific,brn
+Bulgaria,bg,Europe,bgr
+Burkina Faso,bf,Africa,bfa
+Burundi,bi,Africa,bdi
+Cambodia,kh,Asia & Pacific,khm
+Cameroon,cm,Africa,cmr
+Canada,ca,North America,can
+Cape Verde,cv,Africa,cpv
+Cayman Islands,ky,South/Latin America,cym
+Central African Republic,cf,Africa,caf
+Chad,td,Africa,tcd
+Chile,cl,South/Latin America,chl
+China,cn,China,chn
+Christmas Island,cx,Asia & Pacific,cxr
+Cocos (Keeling) Islands,cc,Asia & Pacific,cck
+Colombia,co,South/Latin America,col
+Comoros,km,Arab Speaking,com
+Congo,cg,Africa,cog
+"Congo, the Democratic Republic of the",cd,Africa,cod
+Cook Islands,ck,Asia & Pacific,cok
+Costa Rica,cr,South/Latin America,cri
+Ivory Coast,ci,Africa,civ
+Croatia,hr,Europe,hrv
+Cuba,cu,South/Latin America,cub
+Curacao,cw,South/Latin America,cuw
+Cyprus,cy,Europe,cyp
+Czech Republic,cz,Europe,cze
+Denmark,dk,Nordic,dnk
+Djibouti,dj,Arab Speaking,dji
+Dominica,dm,South/Latin America,dma
+Dominican Republic,do,South/Latin America,dom
+Ecuador,ec,South/Latin America,ecu
+Egypt,eg,Arab Speaking,egy
+El Salvador,sv,South/Latin America,slv
+Equatorial Guinea,gq,Africa,gnq
+Eritrea,er,Africa,eri
+Estonia,ee,Europe,est
+Ethiopia,et,Africa,eth
+Falkland Islands (Malvinas),fk,South/Latin America,flk
+Faroe Islands,fo,Europe,fro
+Fiji,fj,Asia & Pacific,fji
+Finland,fi,Nordic,fin
+France,fr,France,fra
+French Guiana,gf,South/Latin America,guf
+French Polynesia,pf,Asia & Pacific,pyf
+French Southern Territories,tf,Asia & Pacific,atf
+Gabon,ga,Africa,gab
+Gambia,gm,Africa,gmb
+Georgia,ge,Europe,geo
+Germany,de,DACH,deu
+Ghana,gh,Africa,gha
+Gibraltar,gi,Europe,gib
+Greece,gr,Europe,grc
+Greenland,gl,Europe,grl
+Grenada,gd,South/Latin America,grd
+Guadeloupe,gp,South/Latin America,glp
+Guam,gu,Asia & Pacific,gum
+Guatemala,gt,South/Latin America,gtm
+Guernsey,gg,Europe,ggy
+Guinea,gn,Africa,gin
+Guinea-Bissau,gw,Africa,gnb
+Guyana,gy,South/Latin America,guy
+Haiti,ht,South/Latin America,hti
+Heard Island and McDonald Islands,hm,Asia & Pacific,hmd
+Holy See (Vatican City State),va,Europe,vat
+Honduras,hn,South/Latin America,hnd
+Hong Kong,hk,China,hkg
+Hungary,hu,Europe,hun
+Iceland,is,Nordic,isl
+India,in,India,ind
+Indonesia,id,Indonesia,idn
+"Iran, Islamic Republic of",ir,Asia & Pacific,irn
+Iraq,iq,Arab Speaking,irq
+Ireland,ie,United Kingdom and Ireland,irl
+Isle of Man,im,Europe,imn
+Israel,il,Europe,isr
+Italy,it,Europe,ita
+Jamaica,jm,South/Latin America,jam
+Japan,jp,Japan,jpn
+Jersey,je,Europe,jey
+Jordan,jo,Arab Speaking,jor
+Kazakhstan,kz,Europe,kaz
+Kenya,ke,Africa,ken
+Kiribati,ki,Asia & Pacific,kir
+"Korea, Democratic People's Republic of",kp,Asia & Pacific,prk
+"Korea, Republic of",kr,"Korea, Republic of",kor
+Kuwait,kw,Arab Speaking,kwt
+Kyrgyzstan,kg,Asia & Pacific,kgz
+Lao People's Democratic Republic,la,Asia & Pacific,lao
+Latvia,lv,Europe,lva
+Lebanon,lb,Arab Speaking,lbn
+Lesotho,ls,Africa,lso
+Liberia,lr,Africa,lbr
+Libya,ly,Arab Speaking,lby
+Other,other,Other,other

@@ -20,3 +20,7 @@ ds/
 
 # MacOS junk files
 .DS_Store
+notebooks/second-try.csv
+notebooks/cleaner.ipynb
+.gitignore
+notebooks/AI_Education_Included_3932.csv

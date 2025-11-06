@@ -1,0 +1,1499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MNIST Neural Network - Graph Visualization</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 10px;
+        }
+
+        .container {
+            max-width: 100%;
+            height: calc(100vh - 20px);
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 20px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: pulse 4s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.3; }
+            50% { transform: scale(1.1); opacity: 0.5; }
+        }
+
+        .header h1 {
+            font-size: 1.5em;
+            margin-bottom: 5px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            position: relative;
+            z-index: 1;
+        }
+
+        .header p {
+            font-size: 0.9em;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 15px;
+            padding: 15px;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .left-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            overflow-y: auto;
+            max-height: 100%;
+        }
+
+        .panel-section {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+        }
+
+        .panel-section h3 {
+            color: #495057;
+            margin-bottom: 10px;
+            font-size: 1em;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 5px;
+        }
+
+        .drawing-canvas {
+            width: 100%;
+            max-width: 280px;
+            aspect-ratio: 1;
+            border: 3px solid #495057;
+            border-radius: 10px;
+            cursor: crosshair;
+            background: white;
+            display: block;
+            margin: 0 auto;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .drawing-canvas:hover {
+            transform: scale(1.02);
+            box-shadow: 0 6px 16px rgba(102, 126, 234, 0.3);
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.85em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            flex: 1;
+            min-width: 100px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover:not(:disabled) {
+            background: #5a6268;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-success:hover:not(:disabled) {
+            background: #218838;
+        }
+        
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .stat-box {
+            background: white;
+            padding: 8px;
+            border-radius: 6px;
+            border: 2px solid #dee2e6;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.75em;
+            color: #6c757d;
+            margin-bottom: 3px;
+        }
+
+        .stat-value {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: #e9ecef;
+            border-radius: 15px;
+            overflow: hidden;
+            margin-top: 15px;
+            position: relative;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #28a745, #20c997);
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .mnist-samples {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            margin-top: 15px;
+        }
+        
+        .mnist-sample {
+            background: white;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            padding: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .mnist-sample:hover {
+            border-color: #667eea;
+            transform: scale(1.05);
+        }
+        
+        .mnist-sample.selected {
+            border-color: #667eea;
+            background: #e7f3ff;
+        }
+        
+        .sample-canvas {
+            width: 100%;
+            aspect-ratio: 1;
+            image-rendering: pixelated;
+            border-radius: 4px;
+        }
+        
+        .sample-label {
+            margin-top: 5px;
+            font-size: 0.85em;
+            font-weight: bold;
+            color: #495057;
+        }
+        
+        .graph-container {
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+            padding: 10px;
+            position: relative;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .graph-canvas {
+            width: 100%;
+            height: 100%;
+            max-height: 100%;
+            border-radius: 8px;
+            background: white;
+            object-fit: contain;
+        }
+        
+        .prediction-display {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: white;
+            padding: 12px;
+            border-radius: 10px;
+            border: 3px solid #28a745;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            min-width: 150px;
+        }
+
+        .prediction-digit {
+            font-size: 3em;
+            font-weight: bold;
+            color: #28a745;
+            text-align: center;
+            margin-bottom: 5px;
+        }
+
+        .prediction-confidence {
+            text-align: center;
+            color: #495057;
+            font-size: 0.9em;
+        }
+        
+        .legend {
+            position: absolute;
+            bottom: 15px;
+            left: 15px;
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            border: 2px solid #dee2e6;
+            font-size: 0.85em;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 4px 0;
+            font-size: 0.85em;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+        }
+        
+        .controls-overlay {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .control-btn {
+            background: white;
+            border: 2px solid #dee2e6;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .control-btn:hover {
+            border-color: #667eea;
+            background: #e7f3ff;
+        }
+        
+        .control-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        .neuron-tooltip {
+            position: absolute;
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            padding: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            pointer-events: none;
+            z-index: 1000;
+            max-width: 200px;
+        }
+
+        .tooltip-title {
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .tooltip-value {
+            font-size: 0.9em;
+            color: #495057;
+        }
+
+        .neuron-visualization {
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+            background: white;
+            padding: 12px;
+            border-radius: 10px;
+            border: 3px solid #667eea;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+            min-width: 150px;
+            max-width: 200px;
+            z-index: 100;
+        }
+
+        .neuron-viz-title {
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 8px;
+            font-size: 0.95em;
+            text-align: center;
+        }
+
+        .neuron-viz-canvas {
+            width: 100%;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            image-rendering: pixelated;
+            background: #f8f9fa;
+        }
+
+        .neuron-viz-info {
+            margin-top: 8px;
+            font-size: 0.8em;
+            color: #495057;
+            text-align: center;
+        }
+
+        .close-viz {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+
+        .close-viz:hover {
+            background: #c82333;
+        }
+
+        .neuron-clickable {
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .neuron-clickable:hover {
+            transform: scale(1.15);
+        }
+
+        .activation-flow {
+            animation: flow 2s ease-in-out infinite;
+        }
+
+        @keyframes flow {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+        
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+        
+        .loading-content {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 400px;
+        }
+        
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 6px solid #e9ecef;
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .output-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 6px;
+            margin-top: 10px;
+        }
+
+        .output-box {
+            background: white;
+            border: 2px solid #dee2e6;
+            border-radius: 6px;
+            padding: 8px 4px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        
+        .output-box.predicted {
+            border-color: #28a745;
+            background: #d4edda;
+            transform: scale(1.05);
+            animation: glow 1s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { box-shadow: 0 0 5px rgba(40, 167, 69, 0.5); }
+            to { box-shadow: 0 0 20px rgba(40, 167, 69, 0.8); }
+        }
+        
+        .output-digit {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #495057;
+            margin-bottom: 3px;
+        }
+        
+        .output-bar {
+            width: 100%;
+            height: 6px;
+            background: #e9ecef;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+        
+        .output-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.3s;
+        }
+        
+        @media (max-width: 1200px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            .left-panel {
+                max-height: 50vh;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.2em;
+            }
+            .header p {
+                font-size: 0.8em;
+            }
+            .main-content {
+                grid-template-columns: 1fr;
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useRef, useEffect } = React;
+
+        // Simplified MNIST-like data generator
+        const generateMNISTSample = (digit) => {
+            const canvas = document.createElement('canvas');
+            canvas.width = 28;
+            canvas.height = 28;
+            const ctx = canvas.getContext('2d');
+            
+            ctx.fillStyle = 'black';
+            ctx.fillRect(0, 0, 28, 28);
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 20px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            // Add some variation
+            const offsetX = (Math.random() - 0.5) * 4;
+            const offsetY = (Math.random() - 0.5) * 4;
+            const rotation = (Math.random() - 0.5) * 0.3;
+            
+            ctx.translate(14 + offsetX, 14 + offsetY);
+            ctx.rotate(rotation);
+            ctx.fillText(digit.toString(), 0, 0);
+            
+            const imageData = ctx.getImageData(0, 0, 28, 28);
+            const pixels = [];
+            for (let i = 0; i < imageData.data.length; i += 4) {
+                pixels.push(imageData.data[i] / 255);
+            }
+            
+            return { pixels, label: digit, image: canvas.toDataURL() };
+        };
+
+        // Neural Network
+        class NeuralNetwork {
+            constructor(inputSize, hiddenSize, outputSize) {
+                this.inputSize = inputSize;
+                this.hiddenSize = hiddenSize;
+                this.outputSize = outputSize;
+                this.initializeWeights();
+            }
+            
+            initializeWeights() {
+                const scale1 = Math.sqrt(2.0 / this.inputSize);
+                const scale2 = Math.sqrt(2.0 / this.hiddenSize);
+                
+                this.weightsIH = this.randomMatrix(this.inputSize, this.hiddenSize, scale1);
+                this.weightsHO = this.randomMatrix(this.hiddenSize, this.outputSize, scale2);
+                this.biasH = new Array(this.hiddenSize).fill(0);
+                this.biasO = new Array(this.outputSize).fill(0);
+            }
+            
+            randomMatrix(rows, cols, scale) {
+                const matrix = [];
+                for (let i = 0; i < rows; i++) {
+                    matrix[i] = [];
+                    for (let j = 0; j < cols; j++) {
+                        matrix[i][j] = (Math.random() * 2 - 1) * scale;
+                    }
+                }
+                return matrix;
+            }
+            
+            sigmoid(x) {
+                return 1 / (1 + Math.exp(-Math.max(Math.min(x, 500), -500)));
+            }
+            
+            sigmoidDerivative(x) {
+                return x * (1 - x);
+            }
+            
+            forward(input) {
+                this.input = input;
+                
+                // Input to hidden
+                this.hidden = new Array(this.hiddenSize);
+                for (let i = 0; i < this.hiddenSize; i++) {
+                    let sum = this.biasH[i];
+                    for (let j = 0; j < this.inputSize; j++) {
+                        sum += input[j] * this.weightsIH[j][i];
+                    }
+                    this.hidden[i] = this.sigmoid(sum);
+                }
+                
+                // Hidden to output
+                this.output = new Array(this.outputSize);
+                for (let i = 0; i < this.outputSize; i++) {
+                    let sum = this.biasO[i];
+                    for (let j = 0; j < this.hiddenSize; j++) {
+                        sum += this.hidden[j] * this.weightsHO[j][i];
+                    }
+                    this.output[i] = this.sigmoid(sum);
+                }
+                
+                return this.output;
+            }
+            
+            train(input, targetDigit, learningRate) {
+                const target = new Array(this.outputSize).fill(0);
+                target[targetDigit] = 1;
+                
+                this.forward(input);
+                
+                // Output layer error
+                const outputError = new Array(this.outputSize);
+                for (let i = 0; i < this.outputSize; i++) {
+                    outputError[i] = (this.output[i] - target[i]) * this.sigmoidDerivative(this.output[i]);
+                }
+                
+                // Hidden layer error
+                const hiddenError = new Array(this.hiddenSize);
+                for (let i = 0; i < this.hiddenSize; i++) {
+                    let error = 0;
+                    for (let j = 0; j < this.outputSize; j++) {
+                        error += outputError[j] * this.weightsHO[i][j];
+                    }
+                    hiddenError[i] = error * this.sigmoidDerivative(this.hidden[i]);
+                }
+                
+                // Update weights
+                for (let i = 0; i < this.hiddenSize; i++) {
+                    for (let j = 0; j < this.outputSize; j++) {
+                        this.weightsHO[i][j] -= learningRate * outputError[j] * this.hidden[i];
+                    }
+                }
+                for (let i = 0; i < this.outputSize; i++) {
+                    this.biasO[i] -= learningRate * outputError[i];
+                }
+                
+                for (let i = 0; i < this.inputSize; i++) {
+                    for (let j = 0; j < this.hiddenSize; j++) {
+                        this.weightsIH[i][j] -= learningRate * hiddenError[j] * input[i];
+                    }
+                }
+                for (let i = 0; i < this.hiddenSize; i++) {
+                    this.biasH[i] -= learningRate * hiddenError[i];
+                }
+                
+                // Calculate cost
+                let cost = 0;
+                for (let i = 0; i < this.outputSize; i++) {
+                    const diff = target[i] - this.output[i];
+                    cost += diff * diff;
+                }
+                
+                return cost;
+            }
+            
+            predict(input) {
+                const output = this.forward(input);
+                let maxIdx = 0;
+                let maxVal = output[0];
+                for (let i = 1; i < output.length; i++) {
+                    if (output[i] > maxVal) {
+                        maxVal = output[i];
+                        maxIdx = i;
+                    }
+                }
+                return { digit: maxIdx, confidence: maxVal, outputs: output };
+            }
+        }
+
+        function MNISTApp() {
+            const canvasRef = useRef(null);
+            const graphCanvasRef = useRef(null);
+            const [isDrawing, setIsDrawing] = useState(false);
+            const [nn] = useState(() => new NeuralNetwork(784, 16, 10));
+            const [mnistSamples, setMnistSamples] = useState([]);
+            const [isTraining, setIsTraining] = useState(false);
+            const [trainingProgress, setTrainingProgress] = useState(0);
+            const [epoch, setEpoch] = useState(0);
+            const [accuracy, setAccuracy] = useState(0);
+            const [prediction, setPrediction] = useState(null);
+            const [networkState, setNetworkState] = useState(null);
+            const [showWeights, setShowWeights] = useState(false);
+            const [selectedNeuron, setSelectedNeuron] = useState(null);
+            const [hoveredNeuron, setHoveredNeuron] = useState(null);
+            const [isLoading, setIsLoading] = useState(false);
+            const neuronVizCanvasRef = useRef(null);
+            const [animateConnections, setAnimateConnections] = useState(false);
+            
+            useEffect(() => {
+                const canvas = canvasRef.current;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.strokeStyle = 'black';
+                ctx.lineWidth = 20;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+            }, []);
+            
+            useEffect(() => {
+                if (networkState) {
+                    drawNetworkGraph();
+                }
+            }, [networkState, showWeights, hoveredNeuron, selectedNeuron, animateConnections]);
+
+            useEffect(() => {
+                if (selectedNeuron && selectedNeuron.layer === 1) {
+                    visualizeNeuronWeights(selectedNeuron.index);
+                }
+            }, [selectedNeuron]);
+            
+            const generateMNISTDataset = () => {
+                setIsLoading(true);
+                setTimeout(() => {
+                    const samples = [];
+                    const samplesPerDigit = 10;
+                    
+                    for (let digit = 0; digit < 10; digit++) {
+                        for (let i = 0; i < samplesPerDigit; i++) {
+                            samples.push(generateMNISTSample(digit));
+                        }
+                    }
+                    
+                    setMnistSamples(samples);
+                    setIsLoading(false);
+                }, 100);
+            };
+            
+            const trainOnMNIST = async () => {
+                if (mnistSamples.length === 0) {
+                    alert('Please generate MNIST dataset first!');
+                    return;
+                }
+                
+                setIsTraining(true);
+                setEpoch(0);
+                setAccuracy(0);
+                
+                const epochs = 50;
+                
+                for (let e = 0; e < epochs; e++) {
+                    const shuffled = [...mnistSamples].sort(() => Math.random() - 0.5);
+                    let totalCost = 0;
+                    let correct = 0;
+                    
+                    for (let i = 0; i < shuffled.length; i++) {
+                        const sample = shuffled[i];
+                        const cost = nn.train(sample.pixels, sample.label, 0.3);
+                        totalCost += cost;
+                        
+                        const pred = nn.predict(sample.pixels);
+                        if (pred.digit === sample.label) correct++;
+                    }
+                    
+                    const acc = (correct / shuffled.length) * 100;
+                    setEpoch(e + 1);
+                    setAccuracy(acc);
+                    setTrainingProgress(((e + 1) / epochs) * 100);
+                    
+                    if (e % 5 === 0) {
+                        await new Promise(resolve => setTimeout(resolve, 10));
+                    }
+                }
+                
+                setIsTraining(false);
+                alert(`Training complete! Final accuracy: ${accuracy.toFixed(1)}%`);
+            };
+            
+            const startDrawing = (e) => {
+                setIsDrawing(true);
+                draw(e);
+            };
+            
+            const stopDrawing = () => {
+                setIsDrawing(false);
+                const canvas = canvasRef.current;
+                const ctx = canvas.getContext('2d');
+                ctx.beginPath();
+            };
+            
+            const draw = (e) => {
+                if (!isDrawing && e.type !== 'mousedown' && e.type !== 'touchstart') return;
+                
+                const canvas = canvasRef.current;
+                const ctx = canvas.getContext('2d');
+                const rect = canvas.getBoundingClientRect();
+                
+                let x, y;
+                if (e.type.includes('touch')) {
+                    e.preventDefault();
+                    x = e.touches[0].clientX - rect.left;
+                    y = e.touches[0].clientY - rect.top;
+                } else {
+                    x = e.clientX - rect.left;
+                    y = e.clientY - rect.top;
+                }
+                
+                ctx.lineTo(x, y);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+            };
+            
+            const clearCanvas = () => {
+                const canvas = canvasRef.current;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                setPrediction(null);
+                setNetworkState(null);
+            };
+            
+            const getPixelData = () => {
+                const canvas = canvasRef.current;
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = 28;
+                tempCanvas.height = 28;
+                const ctx = tempCanvas.getContext('2d');
+                
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, 28, 28);
+                ctx.drawImage(canvas, 0, 0, 28, 28);
+                
+                const imageData = ctx.getImageData(0, 0, 28, 28);
+                const pixels = [];
+                
+                for (let i = 0; i < imageData.data.length; i += 4) {
+                    const r = imageData.data[i];
+                    const g = imageData.data[i + 1];
+                    const b = imageData.data[i + 2];
+                    const gray = (r + g + b) / 3;
+                    pixels.push(1 - (gray / 255));
+                }
+                
+                return pixels;
+            };
+            
+            const recognizeDigit = () => {
+                const pixels = getPixelData();
+                const result = nn.predict(pixels);
+                setPrediction(result);
+
+                setNetworkState({
+                    input: pixels,
+                    hidden: nn.hidden,
+                    output: nn.output
+                });
+
+                // Trigger animation
+                setAnimateConnections(true);
+                setTimeout(() => setAnimateConnections(false), 2000);
+            };
+            
+            const testOnSample = (sample) => {
+                const result = nn.predict(sample.pixels);
+                setPrediction(result);
+
+                setNetworkState({
+                    input: sample.pixels,
+                    hidden: nn.hidden,
+                    output: nn.output
+                });
+
+                // Trigger animation
+                setAnimateConnections(true);
+                setTimeout(() => setAnimateConnections(false), 2000);
+
+                // Draw the sample on the canvas
+                const canvas = canvasRef.current;
+                const ctx = canvas.getContext('2d');
+                const img = new Image();
+                img.onload = () => {
+                    ctx.fillStyle = 'white';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                };
+                img.src = sample.image;
+            };
+
+            const visualizeNeuronWeights = (neuronIndex) => {
+                const canvas = neuronVizCanvasRef.current;
+                if (!canvas) return;
+
+                const ctx = canvas.getContext('2d');
+                const gridSize = 28;
+                const cellSize = canvas.width / gridSize;
+
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                // Get weights for this hidden neuron from input layer
+                const weights = [];
+                for (let i = 0; i < nn.inputSize; i++) {
+                    weights.push(nn.weightsIH[i][neuronIndex]);
+                }
+
+                // Normalize weights for visualization
+                const maxWeight = Math.max(...weights.map(Math.abs));
+
+                // Draw weight heatmap
+                for (let i = 0; i < gridSize; i++) {
+                    for (let j = 0; j < gridSize; j++) {
+                        const idx = i * gridSize + j;
+                        const weight = weights[idx];
+                        const normalized = weight / (maxWeight || 1);
+
+                        // Color: blue for negative, red for positive
+                        let r, g, b;
+                        if (normalized > 0) {
+                            r = Math.floor(255 * normalized);
+                            g = 0;
+                            b = 0;
+                        } else {
+                            r = 0;
+                            g = 0;
+                            b = Math.floor(255 * Math.abs(normalized));
+                        }
+
+                        ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+                        ctx.fillRect(j * cellSize, i * cellSize, cellSize, cellSize);
+                    }
+                }
+
+                // Draw grid
+                ctx.strokeStyle = 'rgba(200, 200, 200, 0.3)';
+                ctx.lineWidth = 0.5;
+                for (let i = 0; i <= gridSize; i++) {
+                    ctx.beginPath();
+                    ctx.moveTo(i * cellSize, 0);
+                    ctx.lineTo(i * cellSize, canvas.height);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(0, i * cellSize);
+                    ctx.lineTo(canvas.width, i * cellSize);
+                    ctx.stroke();
+                }
+            };
+
+            const handleNeuronClick = (layer, index, x, y) => {
+                if (layer === 1) { // Only for hidden layer
+                    setSelectedNeuron({ layer, index, x, y });
+                }
+            };
+            
+            const drawNetworkGraph = () => {
+                const canvas = graphCanvasRef.current;
+                if (!canvas || !networkState) return;
+
+                const ctx = canvas.getContext('2d');
+                const width = canvas.width;
+                const height = canvas.height;
+
+                ctx.clearRect(0, 0, width, height);
+
+                // Layer positions
+                const layers = [
+                    { neurons: 784, x: 100, label: 'Input (28×28)' },
+                    { neurons: 16, x: width / 2, label: 'Hidden (16)' },
+                    { neurons: 10, x: width - 100, label: 'Output (10)' }
+                ];
+
+                const maxNeurons = 20;
+
+                // Draw connections with enhanced visuals
+                for (let l = 0; l < layers.length - 1; l++) {
+                    const layer1 = layers[l];
+                    const layer2 = layers[l + 1];
+
+                    const neurons1 = Math.min(layer1.neurons, maxNeurons);
+                    const neurons2 = Math.min(layer2.neurons, maxNeurons);
+
+                    const step1 = (height - 200) / (neurons1 + 1);
+                    const step2 = (height - 200) / (neurons2 + 1);
+
+                    for (let i = 0; i < neurons1; i++) {
+                        for (let j = 0; j < neurons2; j++) {
+                            const y1 = 100 + step1 * (i + 1);
+                            const y2 = 100 + step2 * (j + 1);
+
+                            // Get activation strength for connection
+                            let activation1 = 0;
+                            if (l === 0 && networkState.input) {
+                                const stride = Math.floor(784 / maxNeurons);
+                                activation1 = networkState.input[i * stride] || 0;
+                            } else if (l === 1 && networkState.hidden) {
+                                activation1 = networkState.hidden[i] || 0;
+                            }
+
+                            // Highlight connections based on selected neuron
+                            let isHighlighted = false;
+                            if (selectedNeuron) {
+                                if (selectedNeuron.layer === 1 && l === 0 && j === selectedNeuron.index) {
+                                    isHighlighted = true;
+                                } else if (selectedNeuron.layer === 1 && l === 1 && i === selectedNeuron.index) {
+                                    isHighlighted = true;
+                                }
+                            }
+
+                            ctx.beginPath();
+                            ctx.moveTo(layer1.x, y1);
+                            ctx.lineTo(layer2.x, y2);
+
+                            if (isHighlighted) {
+                                ctx.strokeStyle = '#667eea';
+                                ctx.lineWidth = 2;
+                                ctx.globalAlpha = 0.6;
+                            } else {
+                                const intensity = Math.floor(150 + activation1 * 100);
+                                ctx.strokeStyle = `rgb(${intensity}, ${intensity}, ${intensity})`;
+                                ctx.lineWidth = 0.5 + activation1;
+                                ctx.globalAlpha = animateConnections ? 0.4 + activation1 * 0.6 : 0.15;
+                            }
+
+                            ctx.stroke();
+                        }
+                    }
+                }
+
+                ctx.globalAlpha = 1;
+                
+                // Draw neurons with enhanced visuals
+                for (let l = 0; l < layers.length; l++) {
+                    const layer = layers[l];
+                    const neuronsToShow = Math.min(layer.neurons, maxNeurons);
+                    const step = (height - 200) / (neuronsToShow + 1);
+
+                    ctx.font = 'bold 14px Arial';
+                    ctx.fillStyle = '#495057';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(layer.label, layer.x, 60);
+
+                    for (let i = 0; i < neuronsToShow; i++) {
+                        const y = 100 + step * (i + 1);
+
+                        let activation = 0;
+                        if (l === 0 && networkState.input) {
+                            const stride = Math.floor(784 / maxNeurons);
+                            activation = networkState.input[i * stride] || 0;
+                        } else if (l === 1 && networkState.hidden) {
+                            activation = networkState.hidden[i] || 0;
+                        } else if (l === 2 && networkState.output) {
+                            activation = networkState.output[i] || 0;
+                        }
+
+                        // Neuron circle
+                        const radius = l === 2 ? 25 : (l === 1 ? 20 : 15);
+
+                        // Check if this neuron is selected
+                        const isSelected = selectedNeuron && selectedNeuron.layer === l && selectedNeuron.index === i;
+
+                        // Enhanced color gradient
+                        const hue = 240; // Blue hue
+                        const saturation = 100;
+                        const lightness = 95 - (activation * 60); // From light to dark blue
+                        const color = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+
+                        // Glow effect for high activation
+                        if (activation > 0.7 && animateConnections) {
+                            ctx.shadowBlur = 15;
+                            ctx.shadowColor = `rgba(102, 126, 234, ${activation})`;
+                        }
+
+                        ctx.beginPath();
+                        ctx.arc(layer.x, y, radius, 0, Math.PI * 2);
+                        ctx.fillStyle = color;
+                        ctx.fill();
+
+                        // Border
+                        ctx.strokeStyle = isSelected ? '#ff6b6b' : (activation > 0.7 ? '#667eea' : '#495057');
+                        ctx.lineWidth = isSelected ? 4 : 2;
+                        ctx.stroke();
+
+                        ctx.shadowBlur = 0;
+
+                        // Activation value
+                        if (l > 0) {
+                            ctx.fillStyle = activation > 0.5 ? 'white' : '#495057';
+                            ctx.font = 'bold 11px Arial';
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'middle';
+                            ctx.fillText(activation.toFixed(2), layer.x, y);
+                        }
+
+                        // Output labels
+                        if (l === 2) {
+                            ctx.fillStyle = '#495057';
+                            ctx.font = 'bold 16px Arial';
+                            ctx.textAlign = 'left';
+                            const isPredicted = prediction && prediction.digit === i;
+                            if (isPredicted) {
+                                ctx.fillStyle = '#28a745';
+                                ctx.font = 'bold 18px Arial';
+                            }
+                            ctx.fillText(i.toString(), layer.x + radius + 10, y);
+                        }
+
+                        // Add click hint for hidden neurons
+                        if (l === 1 && activation > 0.1) {
+                            ctx.fillStyle = 'rgba(102, 126, 234, 0.1)';
+                            ctx.beginPath();
+                            ctx.arc(layer.x, y, radius + 5, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+                    }
+                    
+                    // Show "..." if there are more neurons
+                    if (layer.neurons > maxNeurons) {
+                        ctx.fillStyle = '#6c757d';
+                        ctx.font = '20px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.fillText('...', layer.x, height - 60);
+                        ctx.font = '12px Arial';
+                        ctx.fillText(`(${layer.neurons} total)`, layer.x, height - 40);
+                    }
+                }
+                
+                // Draw input visualization
+                if (networkState.input && layers[0].x < width / 2) {
+                    const gridSize = 28;
+                    const cellSize = 3;
+                    const gridX = 20;
+                    const gridY = height / 2 - (gridSize * cellSize) / 2;
+                    
+                    for (let i = 0; i < gridSize; i++) {
+                        for (let j = 0; j < gridSize; j++) {
+                            const idx = i * gridSize + j;
+                            const val = networkState.input[idx];
+                            const intensity = Math.floor(val * 255);
+                            const color = `rgb(${255-intensity}, ${255-intensity}, ${255-intensity})`;
+                            
+                            ctx.fillStyle = color;
+                            ctx.fillRect(gridX + j * cellSize, gridY + i * cellSize, cellSize, cellSize);
+                        }
+                    }
+                    
+                    ctx.strokeStyle = '#495057';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(gridX, gridY, gridSize * cellSize, gridSize * cellSize);
+                }
+            };
+            
+            return (
+                <div className="container">
+                    {isLoading && (
+                        <div className="loading-overlay">
+                            <div className="loading-content">
+                                <div className="loading-spinner"></div>
+                                <h3>Generating MNIST-like Dataset...</h3>
+                                <p>Creating 100 training samples</p>
+                            </div>
+                        </div>
+                    )}
+                    
+                    <div className="header">
+                        <h1>🧠 MNIST Neural Network Visualizer</h1>
+                        <p>Train on MNIST-like data and watch the network learn with graph visualization</p>
+                    </div>
+                    
+                    <div className="main-content">
+                        <div className="left-panel">
+                            <div className="panel-section">
+                                <h3>Draw Your Digit</h3>
+                                <canvas
+                                    ref={canvasRef}
+                                    className="drawing-canvas"
+                                    width="280"
+                                    height="280"
+                                    onMouseDown={startDrawing}
+                                    onMouseMove={draw}
+                                    onMouseUp={stopDrawing}
+                                    onMouseLeave={stopDrawing}
+                                    onTouchStart={startDrawing}
+                                    onTouchMove={draw}
+                                    onTouchEnd={stopDrawing}
+                                />
+                                
+                                <div className="button-group">
+                                    <button className="btn-danger" onClick={clearCanvas}>
+                                        Clear
+                                    </button>
+                                    <button className="btn-primary" onClick={recognizeDigit}>
+                                        Recognize
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div className="panel-section">
+                                <h3>Training Controls</h3>
+                                
+                                <div className="button-group">
+                                    <button 
+                                        className="btn-success" 
+                                        onClick={generateMNISTDataset}
+                                        disabled={isTraining}
+                                    >
+                                        Generate Dataset
+                                    </button>
+                                    <button 
+                                        className="btn-primary" 
+                                        onClick={trainOnMNIST}
+                                        disabled={isTraining || mnistSamples.length === 0}
+                                    >
+                                        {isTraining ? 'Training...' : 'Train Network'}
+                                    </button>
+                                </div>
+                                
+                                {isTraining && (
+                                    <div className="progress-bar">
+                                        <div 
+                                            className="progress-fill"
+                                            style={{ width: `${trainingProgress}%` }}
+                                        >
+                                            {trainingProgress.toFixed(0)}%
+                                        </div>
+                                    </div>
+                                )}
+                                
+                                <div className="stats-grid">
+                                    <div className="stat-box">
+                                        <div className="stat-label">Epoch</div>
+                                        <div className="stat-value">{epoch}</div>
+                                    </div>
+                                    <div className="stat-box">
+                                        <div className="stat-label">Accuracy</div>
+                                        <div className="stat-value">{accuracy.toFixed(1)}%</div>
+                                    </div>
+                                    <div className="stat-box">
+                                        <div className="stat-label">Samples</div>
+                                        <div className="stat-value">{mnistSamples.length}</div>
+                                    </div>
+                                    <div className="stat-box">
+                                        <div className="stat-label">Parameters</div>
+                                        <div className="stat-value">{(784*16 + 16*10 + 26).toLocaleString()}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {prediction && (
+                                <div className="panel-section">
+                                    <h3>Prediction Results</h3>
+                                    <div className="output-grid">
+                                        {prediction.outputs.map((conf, digit) => (
+                                            <div 
+                                                key={digit}
+                                                className={`output-box ${digit === prediction.digit ? 'predicted' : ''}`}
+                                            >
+                                                <div className="output-digit">{digit}</div>
+                                                <div style={{ fontSize: '0.75em', color: '#6c757d' }}>
+                                                    {(conf * 100).toFixed(0)}%
+                                                </div>
+                                                <div className="output-bar">
+                                                    <div 
+                                                        className="output-bar-fill"
+                                                        style={{ width: `${conf * 100}%` }}
+                                                    />
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                            
+                            {mnistSamples.length > 0 && (
+                                <div className="panel-section">
+                                    <h3>Test Samples (click to test)</h3>
+                                    <div className="mnist-samples">
+                                        {mnistSamples.slice(0, 20).map((sample, idx) => (
+                                            <div 
+                                                key={idx}
+                                                className="mnist-sample"
+                                                onClick={() => testOnSample(sample)}
+                                            >
+                                                <img 
+                                                    src={sample.image}
+                                                    className="sample-canvas"
+                                                    alt={`Digit ${sample.label}`}
+                                                />
+                                                <div className="sample-label">{sample.label}</div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                        
+                        <div className="graph-container">
+                            <canvas
+                                ref={graphCanvasRef}
+                                className="graph-canvas"
+                                width="1000"
+                                height="700"
+                                onClick={(e) => {
+                                    if (!networkState) return;
+                                    const canvas = graphCanvasRef.current;
+                                    const rect = canvas.getBoundingClientRect();
+
+                                    // Scale coordinates from display size to canvas size
+                                    const scaleX = canvas.width / rect.width;
+                                    const scaleY = canvas.height / rect.height;
+                                    const x = (e.clientX - rect.left) * scaleX;
+                                    const y = (e.clientY - rect.top) * scaleY;
+
+                                    // Check if clicked on hidden layer neuron
+                                    const hiddenX = canvas.width / 2;
+                                    const maxNeurons = 20;
+                                    const neuronsToShow = Math.min(16, maxNeurons);
+                                    const step = (canvas.height - 200) / (neuronsToShow + 1);
+
+                                    for (let i = 0; i < neuronsToShow; i++) {
+                                        const neuronY = 100 + step * (i + 1);
+                                        const dist = Math.sqrt((x - hiddenX) ** 2 + (y - neuronY) ** 2);
+                                        if (dist < 20) {
+                                            handleNeuronClick(1, i, hiddenX, neuronY);
+                                            return;
+                                        }
+                                    }
+
+                                    // Click elsewhere to deselect
+                                    setSelectedNeuron(null);
+                                }}
+                                style={{ cursor: networkState ? 'pointer' : 'default' }}
+                            />
+                            
+                            {prediction && (
+                                <div className="prediction-display">
+                                    <div style={{ fontSize: '0.9em', color: '#6c757d', marginBottom: '5px' }}>
+                                        Predicted Digit
+                                    </div>
+                                    <div className="prediction-digit">{prediction.digit}</div>
+                                    <div className="prediction-confidence">
+                                        {(prediction.confidence * 100).toFixed(1)}% confident
+                                    </div>
+                                </div>
+                            )}
+                            
+                            <div className="legend">
+                                <div style={{ fontWeight: 'bold', marginBottom: '8px', color: '#495057' }}>
+                                    Legend
+                                </div>
+                                <div className="legend-item">
+                                    <div className="legend-color" style={{ background: 'linear-gradient(to right, #e7f0ff, #0000ff)' }}></div>
+                                    <span>Neuron Activation</span>
+                                </div>
+                                <div className="legend-item">
+                                    <div className="legend-color" style={{ background: '#adb5bd' }}></div>
+                                    <span>Connections</span>
+                                </div>
+                                <div className="legend-item">
+                                    <div className="legend-color" style={{ background: '#667eea', border: '2px solid #495057' }}></div>
+                                    <span>Active Connection</span>
+                                </div>
+                                <div style={{ marginTop: '8px', fontSize: '0.85em', color: '#6c757d', fontStyle: 'italic' }}>
+                                    💡 Click hidden neurons to see what they detect
+                                </div>
+                            </div>
+
+                            {selectedNeuron && selectedNeuron.layer === 1 && (
+                                <div className="neuron-visualization">
+                                    <button className="close-viz" onClick={() => setSelectedNeuron(null)}>×</button>
+                                    <div className="neuron-viz-title">
+                                        Hidden Neuron #{selectedNeuron.index}
+                                    </div>
+                                    <div className="neuron-viz-info" style={{ marginBottom: '10px', fontSize: '0.85em' }}>
+                                        Weight Pattern
+                                    </div>
+                                    <canvas
+                                        ref={neuronVizCanvasRef}
+                                        className="neuron-viz-canvas"
+                                        width="140"
+                                        height="140"
+                                    />
+                                    <div className="neuron-viz-info">
+                                        <strong>Activation:</strong> {networkState.hidden[selectedNeuron.index]?.toFixed(3) || '0.000'}
+                                    </div>
+                                    <div style={{ marginTop: '8px', fontSize: '0.8em', color: '#6c757d' }}>
+                                        <span style={{ color: 'red' }}>■</span> Positive weights
+                                        <br />
+                                        <span style={{ color: 'blue' }}>■</span> Negative weights
+                                    </div>
+                                </div>
+                            )}
+                            
+                            {!networkState && (
+                                <div style={{
+                                    position: 'absolute',
+                                    top: '50%',
+                                    left: '50%',
+                                    transform: 'translate(-50%, -50%)',
+                                    textAlign: 'center',
+                                    color: '#6c757d',
+                                    fontSize: '1.2em',
+                                    padding: '30px',
+                                    background: 'rgba(255, 255, 255, 0.9)',
+                                    borderRadius: '15px',
+                                    border: '2px dashed #dee2e6'
+                                }}>
+                                    <p style={{ fontSize: '1.5em', marginBottom: '15px' }}>🎨</p>
+                                    <p style={{ fontWeight: 'bold', color: '#495057' }}>Draw a digit and click "Recognize"</p>
+                                    <p style={{ fontSize: '0.8em', marginTop: '10px' }}>
+                                        Or generate and train on MNIST-like data!
+                                    </p>
+                                    <p style={{ fontSize: '0.75em', marginTop: '15px', color: '#667eea' }}>
+                                        After training, click on hidden layer neurons to see what patterns they detect
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<MNISTApp />, document.getElementById('root'));
+    </script>
+</body>
+</html>

@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neural Network Forward & Backward Propagation Visualizer</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 20px;
+            padding: 30px;
+        }
+        
+        .left-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .control-panel {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            border: 2px solid #e9ecef;
+        }
+        
+        .control-section {
+            margin-bottom: 25px;
+        }
+        
+        .control-section:last-child {
+            margin-bottom: 0;
+        }
+        
+        .control-section h3 {
+            color: #495057;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 8px;
+        }
+        
+        .input-group {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 12px;
+        }
+        
+        .input-group label {
+            min-width: 120px;
+            color: #495057;
+            font-weight: 500;
+        }
+        
+        .input-group input {
+            flex: 1;
+            padding: 10px 15px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: all 0.3s;
+        }
+        
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            flex: 1;
+            min-width: 150px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+        
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+        
+        .network-canvas {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            border: 2px solid #e9ecef;
+            min-height: 500px;
+            position: relative;
+        }
+        
+        .neuron {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 3px solid #495057;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9em;
+            transition: all 0.3s;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .neuron:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+        }
+        
+        .connection {
+            position: absolute;
+            height: 3px;
+            background: #adb5bd;
+            transform-origin: left center;
+            transition: all 0.3s;
+            opacity: 0.6;
+        }
+        
+        .connection.active {
+            background: #667eea;
+            opacity: 1;
+            height: 4px;
+        }
+        
+        .layer-label {
+            position: absolute;
+            font-weight: 600;
+            color: #495057;
+            font-size: 1.1em;
+        }
+        
+        .right-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .calculation-box {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            border: 2px solid #e9ecef;
+            max-height: 800px;
+            overflow-y: auto;
+        }
+        
+        .calculation-box h3 {
+            color: #495057;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 8px;
+            sticky: top 0;
+            background: #f8f9fa;
+        }
+        
+        .calc-step {
+            background: white;
+            padding: 15px;
+            margin-bottom: 12px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .calc-step.backward {
+            border-left-color: #dc3545;
+        }
+        
+        .calc-step h4 {
+            color: #667eea;
+            margin-bottom: 8px;
+            font-size: 1em;
+        }
+        
+        .calc-step.backward h4 {
+            color: #dc3545;
+        }
+        
+        .calc-formula {
+            font-family: 'Courier New', monospace;
+            background: #f1f3f5;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 8px 0;
+            font-size: 0.95em;
+            overflow-x: auto;
+        }
+        
+        .calc-result {
+            color: #28a745;
+            font-weight: bold;
+            margin-top: 8px;
+            font-size: 1.05em;
+        }
+        
+        .info-box {
+            background: #e7f3ff;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        
+        .info-box h4 {
+            color: #667eea;
+            margin-bottom: 8px;
+        }
+        
+        .cost-display {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .cost-display h4 {
+            margin-bottom: 10px;
+            opacity: 0.9;
+        }
+        
+        .cost-value {
+            font-size: 2em;
+            font-weight: bold;
+        }
+        
+        .weight-label {
+            position: absolute;
+            font-size: 0.75em;
+            background: rgba(255,255,255,0.9);
+            padding: 2px 6px;
+            border-radius: 4px;
+            border: 1px solid #dee2e6;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+        
+        @media (max-width: 1200px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #764ba2;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Sigmoid function and its derivative
+        const sigmoid = (x) => 1 / (1 + Math.exp(-Math.max(Math.min(x, 500), -500)));
+        const sigmoidDerivative = (x) => x * (1 - x);
+
+        function NeuralNetworkVisualizer() {
+            // Network architecture: 2 inputs, 2 hidden, 1 output
+            const [input1, setInput1] = useState(0.8);
+            const [input2, setInput2] = useState(0.4);
+            const [desiredOutput, setDesiredOutput] = useState(1.0);
+            const [learningRate, setLearningRate] = useState(0.5);
+            
+            // Weights and biases
+            const [weights, setWeights] = useState({
+                w1: 0.5, w2: 0.3, w3: 0.4, w4: 0.6,  // input to hidden
+                w5: 0.7, w6: 0.8,  // hidden to output
+            });
+            
+            const [biases, setBiases] = useState({
+                b1: 0.1, b2: 0.2, b3: 0.15
+            });
+            
+            // Activations and intermediate values
+            const [activations, setActivations] = useState({
+                a01: 0, a02: 0,  // inputs
+                z1: 0, a1: 0,    // hidden neuron 1
+                z2: 0, a2: 0,    // hidden neuron 2
+                z3: 0, a3: 0,    // output
+            });
+            
+            const [cost, setCost] = useState(0);
+            const [gradients, setGradients] = useState(null);
+            const [calculations, setCalculations] = useState([]);
+            const [mode, setMode] = useState('none'); // 'none', 'forward', 'backward'
+            const [highlightedNeuron, setHighlightedNeuron] = useState(null);
+
+            // Initialize network with random weights
+            const initializeWeights = () => {
+                const newWeights = {
+                    w1: (Math.random() - 0.5) * 2,
+                    w2: (Math.random() - 0.5) * 2,
+                    w3: (Math.random() - 0.5) * 2,
+                    w4: (Math.random() - 0.5) * 2,
+                    w5: (Math.random() - 0.5) * 2,
+                    w6: (Math.random() - 0.5) * 2,
+                };
+                const newBiases = {
+                    b1: (Math.random() - 0.5) * 0.5,
+                    b2: (Math.random() - 0.5) * 0.5,
+                    b3: (Math.random() - 0.5) * 0.5,
+                };
+                setWeights(newWeights);
+                setBiases(newBiases);
+                setMode('none');
+                setCalculations([]);
+            };
+
+            // Forward propagation with detailed calculations
+            const forwardPropagation = () => {
+                const calcs = [];
+                
+                // Input layer
+                const a01 = parseFloat(input1);
+                const a02 = parseFloat(input2);
+                
+                calcs.push({
+                    title: "Input Layer",
+                    formula: `a₀₁ = ${a01.toFixed(3)}, a₀₂ = ${a02.toFixed(3)}`,
+                    result: "Input neurons are set to the provided values"
+                });
+                
+                // Hidden neuron 1
+                const z1 = weights.w1 * a01 + weights.w3 * a02 + biases.b1;
+                calcs.push({
+                    title: "Hidden Neuron 1 - Weighted Sum",
+                    formula: `z₁ = w₁·a₀₁ + w₃·a₀₂ + b₁\nz₁ = ${weights.w1.toFixed(3)}·${a01.toFixed(3)} + ${weights.w3.toFixed(3)}·${a02.toFixed(3)} + ${biases.b1.toFixed(3)}\nz₁ = ${(weights.w1 * a01).toFixed(3)} + ${(weights.w3 * a02).toFixed(3)} + ${biases.b1.toFixed(3)}`,
+                    result: `z₁ = ${z1.toFixed(3)}`
+                });
+                
+                const a1 = sigmoid(z1);
+                calcs.push({
+                    title: "Hidden Neuron 1 - Activation",
+                    formula: `a₁ = σ(z₁) = 1 / (1 + e⁻ᶻ¹)\na₁ = 1 / (1 + e⁻⁽${z1.toFixed(3)}⁾)\na₁ = 1 / (1 + ${Math.exp(-z1).toFixed(3)})`,
+                    result: `a₁ = ${a1.toFixed(3)}`
+                });
+                
+                // Hidden neuron 2
+                const z2 = weights.w2 * a01 + weights.w4 * a02 + biases.b2;
+                calcs.push({
+                    title: "Hidden Neuron 2 - Weighted Sum",
+                    formula: `z₂ = w₂·a₀₁ + w₄·a₀₂ + b₂\nz₂ = ${weights.w2.toFixed(3)}·${a01.toFixed(3)} + ${weights.w4.toFixed(3)}·${a02.toFixed(3)} + ${biases.b2.toFixed(3)}\nz₂ = ${(weights.w2 * a01).toFixed(3)} + ${(weights.w4 * a02).toFixed(3)} + ${biases.b2.toFixed(3)}`,
+                    result: `z₂ = ${z2.toFixed(3)}`
+                });
+                
+                const a2 = sigmoid(z2);
+                calcs.push({
+                    title: "Hidden Neuron 2 - Activation",
+                    formula: `a₂ = σ(z₂) = 1 / (1 + e⁻ᶻ²)\na₂ = 1 / (1 + e⁻⁽${z2.toFixed(3)}⁾)\na₂ = 1 / (1 + ${Math.exp(-z2).toFixed(3)})`,
+                    result: `a₂ = ${a2.toFixed(3)}`
+                });
+                
+                // Output neuron
+                const z3 = weights.w5 * a1 + weights.w6 * a2 + biases.b3;
+                calcs.push({
+                    title: "Output Neuron - Weighted Sum",
+                    formula: `z₃ = w₅·a₁ + w₆·a₂ + b₃\nz₃ = ${weights.w5.toFixed(3)}·${a1.toFixed(3)} + ${weights.w6.toFixed(3)}·${a2.toFixed(3)} + ${biases.b3.toFixed(3)}\nz₃ = ${(weights.w5 * a1).toFixed(3)} + ${(weights.w6 * a2).toFixed(3)} + ${biases.b3.toFixed(3)}`,
+                    result: `z₃ = ${z3.toFixed(3)}`
+                });
+                
+                const a3 = sigmoid(z3);
+                calcs.push({
+                    title: "Output Neuron - Activation",
+                    formula: `a₃ = σ(z₃) = 1 / (1 + e⁻ᶻ³)\na₃ = 1 / (1 + e⁻⁽${z3.toFixed(3)}⁾)\na₃ = 1 / (1 + ${Math.exp(-z3).toFixed(3)})`,
+                    result: `a₃ = ${a3.toFixed(3)}`
+                });
+                
+                // Cost calculation
+                const error = desiredOutput - a3;
+                const costValue = error * error;
+                calcs.push({
+                    title: "Cost (Mean Squared Error)",
+                    formula: `Cost = (y - a₃)²\nCost = (${desiredOutput.toFixed(3)} - ${a3.toFixed(3)})²\nCost = (${error.toFixed(3)})²`,
+                    result: `Cost = ${costValue.toFixed(6)}`
+                });
+                
+                setActivations({ a01, a02, z1, a1, z2, a2, z3, a3 });
+                setCost(costValue);
+                setCalculations(calcs);
+                setMode('forward');
+            };
+
+            // Backward propagation with detailed calculations
+            const backwardPropagation = () => {
+                if (mode !== 'forward') {
+                    alert('Please run forward propagation first!');
+                    return;
+                }
+                
+                const calcs = [...calculations];
+                const { a01, a02, a1, a2, a3 } = activations;
+                
+                // Output layer gradients
+                const dCost_da3 = 2 * (a3 - desiredOutput);
+                calcs.push({
+                    title: "∂Cost/∂a₃ - Output Error",
+                    formula: `∂Cost/∂a₃ = 2(a₃ - y)\n∂Cost/∂a₃ = 2(${a3.toFixed(3)} - ${desiredOutput.toFixed(3)})\n∂Cost/∂a₃ = 2(${(a3 - desiredOutput).toFixed(3)})`,
+                    result: `∂Cost/∂a₃ = ${dCost_da3.toFixed(4)}`,
+                    backward: true
+                });
+                
+                const da3_dz3 = sigmoidDerivative(a3);
+                calcs.push({
+                    title: "∂a₃/∂z₃ - Sigmoid Derivative",
+                    formula: `∂a₃/∂z₃ = a₃(1 - a₃)\n∂a₃/∂z₃ = ${a3.toFixed(3)}(1 - ${a3.toFixed(3)})\n∂a₃/∂z₃ = ${a3.toFixed(3)} × ${(1-a3).toFixed(3)}`,
+                    result: `∂a₃/∂z₃ = ${da3_dz3.toFixed(4)}`,
+                    backward: true
+                });
+                
+                const dCost_dz3 = dCost_da3 * da3_dz3;
+                calcs.push({
+                    title: "∂Cost/∂z₃ - Chain Rule",
+                    formula: `∂Cost/∂z₃ = (∂Cost/∂a₃) × (∂a₃/∂z₃)\n∂Cost/∂z₃ = ${dCost_da3.toFixed(4)} × ${da3_dz3.toFixed(4)}`,
+                    result: `∂Cost/∂z₃ = ${dCost_dz3.toFixed(4)}`,
+                    backward: true
+                });
+                
+                // Gradients for output layer weights and bias
+                const dCost_dw5 = dCost_dz3 * a1;
+                const dCost_dw6 = dCost_dz3 * a2;
+                const dCost_db3 = dCost_dz3;
+                
+                calcs.push({
+                    title: "∂Cost/∂w₅ - Weight Gradient",
+                    formula: `∂Cost/∂w₅ = (∂Cost/∂z₃) × a₁\n∂Cost/∂w₅ = ${dCost_dz3.toFixed(4)} × ${a1.toFixed(3)}`,
+                    result: `∂Cost/∂w₅ = ${dCost_dw5.toFixed(4)}`,
+                    backward: true
+                });
+                
+                calcs.push({
+                    title: "∂Cost/∂w₆ - Weight Gradient",
+                    formula: `∂Cost/∂w₆ = (∂Cost/∂z₃) × a₂\n∂Cost/∂w₆ = ${dCost_dz3.toFixed(4)} × ${a2.toFixed(3)}`,
+                    result: `∂Cost/∂w₆ = ${dCost_dw6.toFixed(4)}`,
+                    backward: true
+                });
+                
+                calcs.push({
+                    title: "∂Cost/∂b₃ - Bias Gradient",
+                    formula: `∂Cost/∂b₃ = ∂Cost/∂z₃`,
+                    result: `∂Cost/∂b₃ = ${dCost_db3.toFixed(4)}`,
+                    backward: true
+                });
+                
+                // Hidden layer gradients
+                const dCost_da1 = dCost_dz3 * weights.w5;
+                const dCost_da2 = dCost_dz3 * weights.w6;
+                
+                calcs.push({
+                    title: "∂Cost/∂a₁ - Hidden Error Propagation",
+                    formula: `∂Cost/∂a₁ = (∂Cost/∂z₃) × w₅\n∂Cost/∂a₁ = ${dCost_dz3.toFixed(4)} × ${weights.w5.toFixed(3)}`,
+                    result: `∂Cost/∂a₁ = ${dCost_da1.toFixed(4)}`,
+                    backward: true
+                });
+                
+                calcs.push({
+                    title: "∂Cost/∂a₂ - Hidden Error Propagation",
+                    formula: `∂Cost/∂a₂ = (∂Cost/∂z₃) × w₆\n∂Cost/∂a₂ = ${dCost_dz3.toFixed(4)} × ${weights.w6.toFixed(3)}`,
+                    result: `∂Cost/∂a₂ = ${dCost_da2.toFixed(4)}`,
+                    backward: true
+                });
+                
+                const da1_dz1 = sigmoidDerivative(a1);
+                const da2_dz2 = sigmoidDerivative(a2);
+                
+                const dCost_dz1 = dCost_da1 * da1_dz1;
+                const dCost_dz2 = dCost_da2 * da2_dz2;
+                
+                calcs.push({
+                    title: "∂Cost/∂z₁ - Hidden Neuron 1",
+                    formula: `∂Cost/∂z₁ = (∂Cost/∂a₁) × (∂a₁/∂z₁)\n∂a₁/∂z₁ = ${da1_dz1.toFixed(4)}\n∂Cost/∂z₁ = ${dCost_da1.toFixed(4)} × ${da1_dz1.toFixed(4)}`,
+                    result: `∂Cost/∂z₁ = ${dCost_dz1.toFixed(4)}`,
+                    backward: true
+                });
+                
+                calcs.push({
+                    title: "∂Cost/∂z₂ - Hidden Neuron 2",
+                    formula: `∂Cost/∂z₂ = (∂Cost/∂a₂) × (∂a₂/∂z₂)\n∂a₂/∂z₂ = ${da2_dz2.toFixed(4)}\n∂Cost/∂z₂ = ${dCost_da2.toFixed(4)} × ${da2_dz2.toFixed(4)}`,
+                    result: `∂Cost/∂z₂ = ${dCost_dz2.toFixed(4)}`,
+                    backward: true
+                });
+                
+                // Hidden layer weight gradients
+                const dCost_dw1 = dCost_dz1 * a01;
+                const dCost_dw2 = dCost_dz2 * a01;
+                const dCost_dw3 = dCost_dz1 * a02;
+                const dCost_dw4 = dCost_dz2 * a02;
+                const dCost_db1 = dCost_dz1;
+                const dCost_db2 = dCost_dz2;
+                
+                calcs.push({
+                    title: "Hidden Layer Weight Gradients",
+                    formula: `∂Cost/∂w₁ = ${dCost_dz1.toFixed(4)} × ${a01.toFixed(3)} = ${dCost_dw1.toFixed(4)}\n∂Cost/∂w₂ = ${dCost_dz2.toFixed(4)} × ${a01.toFixed(3)} = ${dCost_dw2.toFixed(4)}\n∂Cost/∂w₃ = ${dCost_dz1.toFixed(4)} × ${a02.toFixed(3)} = ${dCost_dw3.toFixed(4)}\n∂Cost/∂w₄ = ${dCost_dz2.toFixed(4)} × ${a02.toFixed(3)} = ${dCost_dw4.toFixed(4)}`,
+                    result: "All weight gradients computed",
+                    backward: true
+                });
+                
+                calcs.push({
+                    title: "Hidden Layer Bias Gradients",
+                    formula: `∂Cost/∂b₁ = ${dCost_db1.toFixed(4)}\n∂Cost/∂b₂ = ${dCost_db2.toFixed(4)}`,
+                    result: "All bias gradients computed",
+                    backward: true
+                });
+                
+                setGradients({
+                    dw1: dCost_dw1, dw2: dCost_dw2, dw3: dCost_dw3,
+                    dw4: dCost_dw4, dw5: dCost_dw5, dw6: dCost_dw6,
+                    db1: dCost_db1, db2: dCost_db2, db3: dCost_db3
+                });
+                
+                setCalculations(calcs);
+                setMode('backward');
+            };
+
+            // Update weights using gradient descent
+            const updateWeights = () => {
+                if (!gradients) {
+                    alert('Please run backward propagation first!');
+                    return;
+                }
+                
+                const lr = parseFloat(learningRate);
+                const newWeights = {
+                    w1: weights.w1 - lr * gradients.dw1,
+                    w2: weights.w2 - lr * gradients.dw2,
+                    w3: weights.w3 - lr * gradients.dw3,
+                    w4: weights.w4 - lr * gradients.dw4,
+                    w5: weights.w5 - lr * gradients.dw5,
+                    w6: weights.w6 - lr * gradients.dw6,
+                };
+                
+                const newBiases = {
+                    b1: biases.b1 - lr * gradients.db1,
+                    b2: biases.b2 - lr * gradients.db2,
+                    b3: biases.b3 - lr * gradients.db3,
+                };
+                
+                const calcs = [...calculations];
+                calcs.push({
+                    title: "Weight Updates (Gradient Descent)",
+                    formula: `Learning Rate α = ${lr}\n\nw₁ = ${weights.w1.toFixed(4)} - ${lr} × ${gradients.dw1.toFixed(4)} = ${newWeights.w1.toFixed(4)}\nw₂ = ${weights.w2.toFixed(4)} - ${lr} × ${gradients.dw2.toFixed(4)} = ${newWeights.w2.toFixed(4)}\nw₃ = ${weights.w3.toFixed(4)} - ${lr} × ${gradients.dw3.toFixed(4)} = ${newWeights.w3.toFixed(4)}\nw₄ = ${weights.w4.toFixed(4)} - ${lr} × ${gradients.dw4.toFixed(4)} = ${newWeights.w4.toFixed(4)}\nw₅ = ${weights.w5.toFixed(4)} - ${lr} × ${gradients.dw5.toFixed(4)} = ${newWeights.w5.toFixed(4)}\nw₆ = ${weights.w6.toFixed(4)} - ${lr} × ${gradients.dw6.toFixed(4)} = ${newWeights.w6.toFixed(4)}`,
+                    result: "All weights updated",
+                    backward: true
+                });
+                
+                calcs.push({
+                    title: "Bias Updates",
+                    formula: `b₁ = ${biases.b1.toFixed(4)} - ${lr} × ${gradients.db1.toFixed(4)} = ${newBiases.b1.toFixed(4)}\nb₂ = ${biases.b2.toFixed(4)} - ${lr} × ${gradients.db2.toFixed(4)} = ${newBiases.b2.toFixed(4)}\nb₃ = ${biases.b3.toFixed(4)} - ${lr} × ${gradients.db3.toFixed(4)} = ${newBiases.b3.toFixed(4)}`,
+                    result: "All biases updated",
+                    backward: true
+                });
+                
+                setWeights(newWeights);
+                setBiases(newBiases);
+                setCalculations(calcs);
+                
+                // Run forward pass again to see improvement
+                setTimeout(() => {
+                    forwardPropagation();
+                }, 100);
+            };
+
+            // Network visualization
+            const renderNetwork = () => {
+                const width = 600;
+                const height = 400;
+                const layerSpacing = 200;
+                const neuronSpacing = 100;
+                
+                // Neuron positions
+                const positions = {
+                    input: [
+                        { x: 50, y: height/2 - neuronSpacing/2 },
+                        { x: 50, y: height/2 + neuronSpacing/2 }
+                    ],
+                    hidden: [
+                        { x: 50 + layerSpacing, y: height/2 - neuronSpacing/2 },
+                        { x: 50 + layerSpacing, y: height/2 + neuronSpacing/2 }
+                    ],
+                    output: [
+                        { x: 50 + 2*layerSpacing, y: height/2 }
+                    ]
+                };
+                
+                const getNeuronColor = (activation) => {
+                    const intensity = Math.floor(activation * 255);
+                    return `rgb(${255-intensity}, ${255-intensity}, 255)`;
+                };
+                
+                return (
+                    <div style={{ position: 'relative', width: `${width}px`, height: `${height}px`, margin: '0 auto' }}>
+                        {/* Layer labels */}
+                        <div className="layer-label" style={{ left: '20px', top: '10px' }}>Input</div>
+                        <div className="layer-label" style={{ left: '210px', top: '10px' }}>Hidden</div>
+                        <div className="layer-label" style={{ left: '410px', top: '10px' }}>Output</div>
+                        
+                        {/* Connections with weight labels */}
+                        {positions.input.map((inputPos, i) => 
+                            positions.hidden.map((hiddenPos, j) => {
+                                const length = Math.sqrt(
+                                    Math.pow(hiddenPos.x - inputPos.x, 2) + 
+                                    Math.pow(hiddenPos.y - inputPos.y, 2)
+                                );
+                                const angle = Math.atan2(
+                                    hiddenPos.y - inputPos.y,
+                                    hiddenPos.x - inputPos.x
+                                ) * 180 / Math.PI;
+                                
+                                const weightKey = i === 0 ? (j === 0 ? 'w1' : 'w2') : (j === 0 ? 'w3' : 'w4');
+                                const weight = weights[weightKey];
+                                const thickness = Math.abs(weight) * 2;
+                                
+                                return (
+                                    <React.Fragment key={`input-hidden-${i}-${j}`}>
+                                        <div
+                                            className={`connection ${mode !== 'none' ? 'active' : ''}`}
+                                            style={{
+                                                left: `${inputPos.x + 25}px`,
+                                                top: `${inputPos.y + 25}px`,
+                                                width: `${length - 50}px`,
+                                                transform: `rotate(${angle}deg)`,
+                                                height: `${thickness}px`,
+                                                background: weight > 0 ? '#667eea' : '#dc3545'
+                                            }}
+                                        />
+                                        <div 
+                                            className="weight-label"
+                                            style={{
+                                                left: `${(inputPos.x + hiddenPos.x)/2}px`,
+                                                top: `${(inputPos.y + hiddenPos.y)/2 - 20}px`
+                                            }}
+                                        >
+                                            {weightKey}={weight.toFixed(2)}
+                                        </div>
+                                    </React.Fragment>
+                                );
+                            })
+                        )}
+                        
+                        {positions.hidden.map((hiddenPos, i) => {
+                            const outputPos = positions.output[0];
+                            const length = Math.sqrt(
+                                Math.pow(outputPos.x - hiddenPos.x, 2) + 
+                                Math.pow(outputPos.y - hiddenPos.y, 2)
+                            );
+                            const angle = Math.atan2(
+                                outputPos.y - hiddenPos.y,
+                                outputPos.x - hiddenPos.x
+                            ) * 180 / Math.PI;
+                            
+                            const weightKey = i === 0 ? 'w5' : 'w6';
+                            const weight = weights[weightKey];
+                            const thickness = Math.abs(weight) * 2;
+                            
+                            return (
+                                <React.Fragment key={`hidden-output-${i}`}>
+                                    <div
+                                        className={`connection ${mode !== 'none' ? 'active' : ''}`}
+                                        style={{
+                                            left: `${hiddenPos.x + 25}px`,
+                                            top: `${hiddenPos.y + 25}px`,
+                                            width: `${length - 50}px`,
+                                            transform: `rotate(${angle}deg)`,
+                                            height: `${thickness}px`,
+                                            background: weight > 0 ? '#667eea' : '#dc3545'
+                                        }}
+                                    />
+                                    <div 
+                                        className="weight-label"
+                                        style={{
+                                            left: `${(hiddenPos.x + outputPos.x)/2}px`,
+                                            top: `${(hiddenPos.y + outputPos.y)/2 - 20}px`
+                                        }}
+                                    >
+                                        {weightKey}={weight.toFixed(2)}
+                                    </div>
+                                </React.Fragment>
+                            );
+                        })}
+                        
+                        {/* Input neurons */}
+                        {positions.input.map((pos, i) => (
+                            <div
+                                key={`input-${i}`}
+                                className="neuron"
+                                style={{
+                                    left: `${pos.x}px`,
+                                    top: `${pos.y}px`,
+                                    background: getNeuronColor(i === 0 ? activations.a01 : activations.a02),
+                                    borderColor: '#495057'
+                                }}
+                                title={`Input ${i+1}: ${(i === 0 ? activations.a01 : activations.a02).toFixed(3)}`}
+                            >
+                                {(i === 0 ? activations.a01 : activations.a02).toFixed(2)}
+                            </div>
+                        ))}
+                        
+                        {/* Hidden neurons */}
+                        {positions.hidden.map((pos, i) => (
+                            <div
+                                key={`hidden-${i}`}
+                                className="neuron"
+                                style={{
+                                    left: `${pos.x}px`,
+                                    top: `${pos.y}px`,
+                                    background: getNeuronColor(i === 0 ? activations.a1 : activations.a2),
+                                    borderColor: mode !== 'none' ? '#667eea' : '#495057'
+                                }}
+                                title={`Hidden ${i+1}: ${(i === 0 ? activations.a1 : activations.a2).toFixed(3)}`}
+                            >
+                                {(i === 0 ? activations.a1 : activations.a2).toFixed(2)}
+                            </div>
+                        ))}
+                        
+                        {/* Output neuron */}
+                        <div
+                            className="neuron"
+                            style={{
+                                left: `${positions.output[0].x}px`,
+                                top: `${positions.output[0].y}px`,
+                                background: getNeuronColor(activations.a3),
+                                borderColor: mode !== 'none' ? '#28a745' : '#495057'
+                            }}
+                            title={`Output: ${activations.a3.toFixed(3)}`}
+                        >
+                            {activations.a3.toFixed(2)}
+                        </div>
+                    </div>
+                );
+            };
+
+            return (
+                <div className="container">
+                    <div className="header">
+                        <h1>🧠 Neural Network Visualizer</h1>
+                        <p>Interactive Forward & Backward Propagation with Step-by-Step Calculations</p>
+                    </div>
+                    
+                    <div className="main-content">
+                        <div className="left-panel">
+                            <div className="control-panel">
+                                <div className="control-section">
+                                    <h3>Input Values</h3>
+                                    <div className="input-group">
+                                        <label>Input 1:</label>
+                                        <input 
+                                            type="number" 
+                                            step="0.1" 
+                                            value={input1}
+                                            onChange={(e) => setInput1(e.target.value)}
+                                        />
+                                    </div>
+                                    <div className="input-group">
+                                        <label>Input 2:</label>
+                                        <input 
+                                            type="number" 
+                                            step="0.1" 
+                                            value={input2}
+                                            onChange={(e) => setInput2(e.target.value)}
+                                        />
+                                    </div>
+                                    <div className="input-group">
+                                        <label>Desired Output:</label>
+                                        <input 
+                                            type="number" 
+                                            step="0.1" 
+                                            value={desiredOutput}
+                                            onChange={(e) => setDesiredOutput(e.target.value)}
+                                        />
+                                    </div>
+                                    <div className="input-group">
+                                        <label>Learning Rate:</label>
+                                        <input 
+                                            type="number" 
+                                            step="0.1" 
+                                            value={learningRate}
+                                            onChange={(e) => setLearningRate(e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+                                
+                                <div className="control-section">
+                                    <h3>Actions</h3>
+                                    <div className="button-group">
+                                        <button className="btn-primary" onClick={forwardPropagation}>
+                                            ▶ Forward Pass
+                                        </button>
+                                        <button className="btn-secondary" onClick={backwardPropagation}>
+                                            ◀ Backward Pass
+                                        </button>
+                                    </div>
+                                    <div className="button-group">
+                                        <button className="btn-success" onClick={updateWeights}>
+                                            ⚡ Update Weights
+                                        </button>
+                                        <button className="btn-secondary" onClick={initializeWeights}>
+                                            🔄 Reset Weights
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                {mode !== 'none' && (
+                                    <div className="cost-display">
+                                        <h4>Current Cost</h4>
+                                        <div className="cost-value">{cost.toFixed(6)}</div>
+                                        <div style={{ marginTop: '10px', fontSize: '0.9em' }}>
+                                            Error: {(desiredOutput - activations.a3).toFixed(4)}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                            
+                            <div className="network-canvas">
+                                {renderNetwork()}
+                                <div className="info-box">
+                                    <h4>💡 How to Use:</h4>
+                                    <p>1. Set input values and desired output<br/>
+                                    2. Click "Forward Pass" to see how data flows through the network<br/>
+                                    3. Click "Backward Pass" to compute gradients<br/>
+                                    4. Click "Update Weights" to apply gradient descent<br/>
+                                    5. Repeat to train the network!</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div className="right-panel">
+                            <div className="calculation-box">
+                                <h3>📊 Detailed Calculations</h3>
+                                {calculations.length === 0 ? (
+                                    <div style={{ textAlign: 'center', padding: '40px', color: '#6c757d' }}>
+                                        <p>Click "Forward Pass" to see step-by-step calculations</p>
+                                    </div>
+                                ) : (
+                                    calculations.map((calc, idx) => (
+                                        <div key={idx} className={`calc-step ${calc.backward ? 'backward' : ''}`}>
+                                            <h4>{calc.title}</h4>
+                                            <div className="calc-formula">
+                                                {calc.formula.split('\n').map((line, i) => (
+                                                    <div key={i}>{line}</div>
+                                                ))}
+                                            </div>
+                                            <div className="calc-result">{calc.result}</div>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<NeuralNetworkVisualizer />, document.getElementById('root'));
+    </script>
+</body>
+</html>

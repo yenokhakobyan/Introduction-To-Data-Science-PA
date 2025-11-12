@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LSTM Neural Network Visualization</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+            padding: 30px 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2.8em;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            color: #7f8c8d;
+        }
+
+        .main-container {
+            max-width: 1800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+            padding: 40px;
+        }
+
+        /* Control Panel Styling */
+        .control-panel {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 40px;
+            box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+        }
+
+        .control-title {
+            color: white;
+            font-size: 1.4em;
+            font-weight: 600;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+
+        .control-item {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .control-label {
+            display: block;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 12px;
+            font-size: 1.05em;
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        input[type="range"] {
+            flex: 1;
+            height: 8px;
+            border-radius: 5px;
+            background: #e0e0e0;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+            transition: transform 0.2s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+        }
+
+        .value-display {
+            min-width: 70px;
+            text-align: center;
+            background: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 1.1em;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .button-group {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background: white;
+            color: #667eea;
+            border: 2px solid white;
+            padding: 14px 32px;
+            border-radius: 10px;
+            font-size: 1.05em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+            background: #f8f9fa;
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        /* SVG Diagram Container */
+        .diagram-container {
+            background: #fafbfc;
+            border-radius: 15px;
+            padding: 40px 20px;
+            margin-bottom: 40px;
+            border: 2px solid #e8ecef;
+            overflow-x: auto;
+        }
+
+        svg {
+            display: block;
+            margin: 0 auto;
+            max-width: 100%;
+            height: auto;
+        }
+
+        /* SVG Styles */
+        .memory-rect {
+            stroke-width: 4;
+            fill: white;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
+            transition: all 0.3s ease;
+        }
+
+        .ltm-rect {
+            stroke: #27ae60;
+        }
+
+        .stm-rect {
+            stroke: #e74c3c;
+        }
+
+        .gate-rect {
+            stroke: #95a5a6;
+            stroke-width: 3;
+            fill: white;
+            filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.08));
+        }
+
+        .input-rect {
+            stroke: #34495e;
+            stroke-width: 3;
+            fill: white;
+            filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.08));
+        }
+
+        .operation-circle {
+            stroke: #2c3e50;
+            stroke-width: 3;
+            fill: white;
+            filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.1));
+        }
+
+        .arrow-path {
+            stroke-width: 3;
+            fill: none;
+            opacity: 0.7;
+            transition: opacity 0.3s ease;
+        }
+
+        .arrow-path:hover {
+            opacity: 1;
+            stroke-width: 4;
+        }
+
+        .ltm-flow {
+            stroke: #27ae60;
+        }
+
+        .stm-flow {
+            stroke: #e74c3c;
+        }
+
+        .data-flow {
+            stroke: #95a5a6;
+        }
+
+        .value-text {
+            font-size: 26px;
+            font-weight: 700;
+            fill: #2c3e50;
+        }
+
+        .label-text {
+            font-size: 15px;
+            font-weight: 600;
+            fill: #7f8c8d;
+        }
+
+        .gate-value-text {
+            font-size: 22px;
+            font-weight: 700;
+            fill: #667eea;
+        }
+
+        .operation-text {
+            font-size: 28px;
+            font-weight: 700;
+            fill: #2c3e50;
+        }
+
+        .annotation-text {
+            font-size: 13px;
+            fill: #95a5a6;
+            font-weight: 500;
+        }
+
+        /* Calculations Section */
+        .calculations-section {
+            background: #fafbfc;
+            border-radius: 15px;
+            padding: 35px;
+            border: 2px solid #e8ecef;
+        }
+
+        .calculations-title {
+            font-size: 2em;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            text-align: center;
+            font-weight: 700;
+        }
+
+        .calc-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border-left: 5px solid #667eea;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s ease;
+        }
+
+        .calc-card:hover {
+            transform: translateX(5px);
+        }
+
+        .calc-card-title {
+            font-size: 1.4em;
+            color: #667eea;
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+
+        .calc-formula {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 1.05em;
+            margin: 10px 0;
+            border: 1px solid #e9ecef;
+            line-height: 1.8;
+        }
+
+        .calc-result {
+            background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+            padding: 12px 18px;
+            border-radius: 8px;
+            font-weight: 700;
+            color: #667eea;
+            margin: 10px 0;
+            font-size: 1.1em;
+        }
+
+        .calc-explanation {
+            color: #5a6c7d;
+            line-height: 1.8;
+            margin-top: 15px;
+            font-size: 1.02em;
+        }
+
+        .summary-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-top: 30px;
+            box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+        }
+
+        .summary-title {
+            font-size: 1.6em;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+
+        .summary-content {
+            font-size: 1.15em;
+            line-height: 2;
+        }
+
+        .highlight-value {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 1.1em;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .controls-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .main-container {
+                padding: 20px;
+            }
+        }
+
+        /* Smooth curve path for sigmoid */
+        .sigmoid-path {
+            stroke: #667eea;
+            stroke-width: 2.5;
+            fill: none;
+            opacity: 0.8;
+        }
+
+        .sigmoid-dot {
+            fill: #667eea;
+            filter: drop-shadow(0 2px 4px rgba(102, 126, 234, 0.4));
+        }
+
+        .tanh-path {
+            stroke: #e67e22;
+            stroke-width: 2.5;
+            fill: none;
+            opacity: 0.8;
+        }
+
+        .tanh-dot {
+            fill: #e67e22;
+            filter: drop-shadow(0 2px 4px rgba(230, 126, 34, 0.4));
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🧠 LSTM Neural Network Visualization</h1>
+        <p>Interactive Long Short-Term Memory Cell Architecture</p>
+    </div>
+
+    <div class="main-container">
+        <!-- Control Panel -->
+        <div class="control-panel">
+            <div class="control-title">⚙️ Control Parameters</div>
+            <div class="controls-grid">
+                <div class="control-item">
+                    <label class="control-label">Input Value (x)</label>
+                    <div class="slider-container">
+                        <input type="range" id="input" min="-2" max="2" step="0.1" value="1.0">
+                        <span class="value-display" id="inputValue">1.00</span>
+                    </div>
+                </div>
+                <div class="control-item">
+                    <label class="control-label">Previous Long-Term Memory (C<sub>t-1</sub>)</label>
+                    <div class="slider-container">
+                        <input type="range" id="prevLTM" min="-2" max="2" step="0.1" value="0.5">
+                        <span class="value-display" id="prevLTMValue">0.50</span>
+                    </div>
+                </div>
+                <div class="control-item">
+                    <label class="control-label">Previous Short-Term Memory (h<sub>t-1</sub>)</label>
+                    <div class="slider-container">
+                        <input type="range" id="prevSTM" min="-2" max="2" step="0.1" value="0.5">
+                        <span class="value-display" id="prevSTMValue">0.50</span>
+                    </div>
+                </div>
+            </div>
+            <div class="button-group">
+                <button onclick="randomize()">🎲 Randomize Values</button>
+                <button onclick="reset()">🔄 Reset to Default</button>
+                <button onclick="runSequence()">▶️ Run Sequence Demo</button>
+            </div>
+        </div>
+
+        <!-- LSTM Diagram -->
+        <div class="diagram-container">
+            <svg id="lstmDiagram" viewBox="0 0 1600 600" style="min-width: 1200px;">
+                <!-- Define markers for arrows -->
+                <defs>
+                    <marker id="arrow-ltm" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                        <polygon points="0 0, 10 3, 0 6" fill="#27ae60" />
+                    </marker>
+                    <marker id="arrow-stm" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                        <polygon points="0 0, 10 3, 0 6" fill="#e74c3c" />
+                    </marker>
+                    <marker id="arrow-data" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                        <polygon points="0 0, 10 3, 0 6" fill="#95a5a6" />
+                    </marker>
+                </defs>
+
+                <!-- Arrows Group (drawn first so they appear behind blocks) -->
+                <g id="arrowsGroup"></g>
+
+                <!-- Long-Term Memory Flow (Top) -->
+                <g id="ltmStart">
+                    <rect x="30" y="40" width="90" height="90" rx="10" class="memory-rect ltm-rect"/>
+                    <text x="75" y="90" text-anchor="middle" class="value-text ltm-value" id="ltmStartText">0.50</text>
+                    <text x="75" y="22" text-anchor="middle" class="label-text" style="fill: #27ae60;">Long-Term</text>
+                    <text x="75" y="155" text-anchor="middle" class="label-text" style="fill: #27ae60;">Memory C<tspan baseline-shift="sub" font-size="12">t-1</tspan></text>
+                </g>
+
+                <!-- Short-Term Memory Input (Bottom) -->
+                <g id="stmStart">
+                    <rect x="30" y="470" width="90" height="90" rx="10" class="memory-rect stm-rect"/>
+                    <text x="75" y="520" text-anchor="middle" class="value-text stm-value" id="stmStartText">0.50</text>
+                    <text x="75" y="452" text-anchor="middle" class="label-text" style="fill: #e74c3c;">Short-Term</text>
+                    <text x="75" y="585" text-anchor="middle" class="label-text" style="fill: #e74c3c;">Memory h<tspan baseline-shift="sub" font-size="12">t-1</tspan></text>
+                </g>
+
+                <!-- Input (Bottom Center) -->
+                <g id="inputBlock">
+                    <rect x="180" y="470" width="90" height="90" rx="10" class="input-rect"/>
+                    <text x="225" y="520" text-anchor="middle" class="value-text" id="inputText" style="fill: #34495e;">1.00</text>
+                    <text x="225" y="452" text-anchor="middle" class="label-text" style="fill: #34495e;">Input</text>
+                    <text x="225" y="585" text-anchor="middle" class="label-text" style="fill: #34495e;">x<tspan baseline-shift="sub" font-size="12">t</tspan></text>
+                </g>
+
+                <!-- Forget Gate (f_t) -->
+                <g id="forgetGate">
+                    <rect x="340" y="190" width="150" height="140" rx="12" class="gate-rect"/>
+                    <path id="forgetCurve" class="sigmoid-path"/>
+                    <circle id="forgetDot" class="sigmoid-dot" r="5"/>
+                    <text x="415" y="213" text-anchor="middle" class="label-text" style="fill: #3498db;">Forget Gate</text>
+                    <text x="415" y="312" text-anchor="middle" class="gate-value-text" id="forgetValueText">0.73</text>
+                    <text x="355" y="245" class="annotation-text">× 1.50</text>
+                    <text x="360" y="280" class="annotation-text">sum</text>
+                    <text x="355" y="265" class="annotation-text">× 2.50</text>
+                </g>
+
+                <!-- Input Gate (i_t) -->
+                <g id="inputGate">
+                    <rect x="560" y="190" width="150" height="140" rx="12" class="gate-rect"/>
+                    <path id="inputCurve" class="sigmoid-path"/>
+                    <circle id="inputDot" class="sigmoid-dot" r="5"/>
+                    <text x="635" y="213" text-anchor="middle" class="label-text" style="fill: #2ecc71;">Input Gate</text>
+                    <text x="635" y="312" text-anchor="middle" class="gate-value-text" id="inputGateValueText">0.73</text>
+                    <text x="575" y="245" class="annotation-text">× 1.50</text>
+                    <text x="580" y="280" class="annotation-text">sum</text>
+                    <text x="575" y="265" class="annotation-text">× 2.50</text>
+                </g>
+
+                <!-- Candidate Gate (C̃_t) -->
+                <g id="candidateGate">
+                    <rect x="780" y="190" width="150" height="140" rx="12" class="gate-rect"/>
+                    <path id="candidateCurve" class="tanh-path"/>
+                    <circle id="candidateDot" class="tanh-dot" r="5"/>
+                    <text x="855" y="213" text-anchor="middle" class="label-text" style="fill: #e67e22;">Candidate</text>
+                    <text x="855" y="312" text-anchor="middle" class="gate-value-text" id="candidateValueText">0.90</text>
+                    <text x="795" y="245" class="annotation-text">× 2.00</text>
+                    <text x="800" y="280" class="annotation-text">sum</text>
+                    <text x="795" y="265" class="annotation-text">× 2.00</text>
+                </g>
+
+                <!-- Output Gate (o_t) -->
+                <g id="outputGate">
+                    <rect x="1000" y="190" width="150" height="140" rx="12" class="gate-rect"/>
+                    <path id="outputCurve" class="sigmoid-path"/>
+                    <circle id="outputDot" class="sigmoid-dot" r="5"/>
+                    <text x="1075" y="213" text-anchor="middle" class="label-text" style="fill: #9b59b6;">Output Gate</text>
+                    <text x="1075" y="312" text-anchor="middle" class="gate-value-text" id="outputGateValueText">0.73</text>
+                    <text x="1015" y="245" class="annotation-text">× 1.50</text>
+                    <text x="1020" y="280" class="annotation-text">sum</text>
+                    <text x="1015" y="265" class="annotation-text">× 2.50</text>
+                </g>
+
+                <!-- Multiply Operation 1 (forget × C_t-1) -->
+                <circle cx="415" cy="85" r="28" class="operation-circle"/>
+                <text x="415" y="95" text-anchor="middle" class="operation-text">×</text>
+
+                <!-- Multiply Operation 2 (input × candidate) -->
+                <circle cx="750" cy="85" r="28" class="operation-circle"/>
+                <text x="750" y="95" text-anchor="middle" class="operation-text">×</text>
+
+                <!-- Sum Operation (combine memories) -->
+                <circle cx="950" cy="85" r="28" class="operation-circle"/>
+                <text x="950" y="98" text-anchor="middle" class="operation-text" style="font-size: 24px;">Σ</text>
+
+                <!-- Tanh Operation (normalize output) -->
+                <rect x="1210" y="55" width="60" height="60" rx="8" class="operation-circle"/>
+                <text x="1240" y="93" text-anchor="middle" class="operation-text" style="font-size: 20px;">tanh</text>
+
+                <!-- Multiply Operation 3 (output × tanh(C_t)) -->
+                <circle cx="1350" cy="350" r="28" class="operation-circle"/>
+                <text x="1350" y="360" text-anchor="middle" class="operation-text">×</text>
+
+                <!-- New Long-Term Memory (Top Right) -->
+                <g id="ltmEnd">
+                    <rect x="1390" y="40" width="90" height="90" rx="10" class="memory-rect ltm-rect"/>
+                    <text x="1435" y="90" text-anchor="middle" class="value-text ltm-value" id="ltmEndText">1.16</text>
+                    <text x="1435" y="22" text-anchor="middle" class="label-text" style="fill: #27ae60;">New LTM</text>
+                    <text x="1435" y="155" text-anchor="middle" class="label-text" style="fill: #27ae60;">C<tspan baseline-shift="sub" font-size="12">t</tspan></text>
+                </g>
+
+                <!-- New Short-Term Memory (Bottom Right) -->
+                <g id="stmEnd">
+                    <rect x="1470" y="470" width="90" height="90" rx="10" class="memory-rect stm-rect"/>
+                    <text x="1515" y="520" text-anchor="middle" class="value-text stm-value" id="stmEndText">0.59</text>
+                    <text x="1515" y="452" text-anchor="middle" class="label-text" style="fill: #e74c3c;">New STM</text>
+                    <text x="1515" y="585" text-anchor="middle" class="label-text" style="fill: #e74c3c;">h<tspan baseline-shift="sub" font-size="12">t</tspan></text>
+                </g>
+            </svg>
+        </div>
+
+        <!-- Calculations Section -->
+        <div class="calculations-section" id="calculationsSection">
+            <!-- Calculations will be inserted here by JavaScript -->
+        </div>
+    </div>
+
+    <script>
+        // Activation functions that transform the weighted inputs
+        function sigmoid(x) {
+            return 1 / (1 + Math.exp(-x));
+        }
+
+        function tanh(x) {
+            return Math.tanh(x);
+        }
+
+        // This function creates a smooth sigmoid curve within a gate block
+        function createSigmoidPath(centerX, centerY, width, height) {
+            const points = [];
+            const numPoints = 40;
+            
+            for (let i = 0; i <= numPoints; i++) {
+                const t = (i / numPoints) * 10 - 5; // Range from -5 to 5 for smooth curve
+                const x = centerX - width/2 + 15 + (i / numPoints) * (width - 30);
+                const y = centerY + height/2 - 20 - (sigmoid(t) * (height - 40));
+                points.push(`${x},${y}`);
+            }
+            
+            return `M ${points.join(' L ')}`;
+        }
+
+        // This function creates a smooth tanh curve which goes from -1 to 1
+        function createTanhPath(centerX, centerY, width, height) {
+            const points = [];
+            const numPoints = 40;
+            
+            for (let i = 0; i <= numPoints; i++) {
+                const t = (i / numPoints) * 8 - 4; // Range from -4 to 4
+                const x = centerX - width/2 + 15 + (i / numPoints) * (width - 30);
+                const y = centerY - (tanh(t) * (height/2 - 20));
+                points.push(`${x},${y}`);
+            }
+            
+            return `M ${points.join(' L ')}`;
+        }
+
+        // This function draws all the arrows showing information flow
+        // The design now has two parallel horizontal streams: long-term memory flowing along the top
+        // and short-term memory flowing along the bottom, creating a symmetric and elegant layout
+        function drawAllArrows() {
+            const arrowsGroup = document.getElementById('arrowsGroup');
+            arrowsGroup.innerHTML = '';
+            
+            const arrows = [
+                // ========== LONG-TERM MEMORY FLOW (TOP HORIZONTAL PATH) ==========
+                // Long-term memory flows from left to right along the top of the diagram
+                { path: 'M 120 85 L 387 85', class: 'arrow-path ltm-flow', marker: 'arrow-ltm' },
+                
+                // From forget gate up to first multiply operation
+                { path: 'M 415 190 L 415 113', class: 'arrow-path data-flow', marker: 'arrow-data' },
+                
+                // From first multiply continuing to sum operation
+                { path: 'M 443 85 L 922 85', class: 'arrow-path ltm-flow', marker: 'arrow-ltm' },
+                
+                // From input gate up to second multiply
+                { path: 'M 635 190 Q 635 140 722 85', class: 'arrow-path data-flow', marker: 'arrow-data' },
+                
+                // From candidate gate up to second multiply
+                { path: 'M 855 190 Q 855 140 778 85', class: 'arrow-path data-flow', marker: 'arrow-data' },
+                
+                // From second multiply to sum operation
+                { path: 'M 778 85 L 922 85', class: 'arrow-path ltm-flow', marker: 'arrow-ltm' },
+                
+                // From sum continuing to new long-term memory on the right
+                { path: 'M 978 85 L 1390 85', class: 'arrow-path ltm-flow', marker: 'arrow-ltm' },
+                
+                // From new LTM down to tanh operation
+                { path: 'M 1435 130 L 1435 180', class: 'arrow-path ltm-flow', marker: 'arrow-ltm' },
+                { path: 'M 1435 180 L 1435 250', class: 'arrow-path ltm-flow', marker: 'arrow-ltm' },
+                
+                // From tanh output to final multiply
+                { path: 'M 1435 250 L 1435 322', class: 'arrow-path data-flow', marker: 'arrow-data' },
+                
+                // ========== SHORT-TERM MEMORY FLOW (BOTTOM HORIZONTAL PATH) ==========
+                // Short-term memory now flows horizontally along the bottom, mirroring the top path
+                { path: 'M 120 515 L 340 515', class: 'arrow-path stm-flow', marker: 'arrow-stm' },
+                
+                // Continue STM flow past forget gate
+                { path: 'M 490 515 L 560 515', class: 'arrow-path stm-flow', marker: 'arrow-stm' },
+                
+                // Continue STM flow past input gate
+                { path: 'M 710 515 L 780 515', class: 'arrow-path stm-flow', marker: 'arrow-stm' },
+                
+                // Continue STM flow past candidate gate
+                { path: 'M 930 515 L 1000 515', class: 'arrow-path stm-flow', marker: 'arrow-stm' },
+                
+                // Continue STM flow past output gate
+                { path: 'M 1150 515 L 1322 515', class: 'arrow-path stm-flow', marker: 'arrow-stm' },
+                
+                // Final connection from multiply down to new STM
+                { path: 'M 1350 378 L 1350 470', class: 'arrow-path stm-flow', marker: 'arrow-stm' },
+                { path: 'M 1350 470 L 1470 470', class: 'arrow-path stm-flow', marker: 'arrow-stm' },
+                { path: 'M 1470 470 L 1515 470', class: 'arrow-path stm-flow', marker: 'arrow-stm' },
+                
+                // ========== INPUT DATA FLOW (PARALLEL TO STM) ==========
+                // Input flows alongside short-term memory
+                { path: 'M 270 515 L 340 515', class: 'arrow-path data-flow', marker: 'arrow-data' },
+                { path: 'M 490 515 L 560 515', class: 'arrow-path data-flow', marker: 'arrow-data' },
+                { path: 'M 710 515 L 780 515', class: 'arrow-path data-flow', marker: 'arrow-data' },
+                { path: 'M 930 515 L 1000 515', class: 'arrow-path data-flow', marker: 'arrow-data' },
+                
+                // ========== VERTICAL CONNECTIONS FROM BOTTOM TO GATES ==========
+                // Short-term memory branches up to each gate
+                { path: 'M 415 515 L 415 330', class: 'arrow-path stm-flow', marker: 'arrow-stm' },
+                { path: 'M 635 515 L 635 330', class: 'arrow-path stm-flow', marker: 'arrow-stm' },
+                { path: 'M 855 515 L 855 330', class: 'arrow-path stm-flow', marker: 'arrow-stm' },
+                { path: 'M 1075 515 L 1075 330', class: 'arrow-path stm-flow', marker: 'arrow-stm' },
+                
+                // Input branches up to each gate
+                { path: 'M 385 515 L 385 400 Q 385 360 390 330', class: 'arrow-path data-flow', marker: 'arrow-data' },
+                { path: 'M 605 515 L 605 400 Q 605 360 610 330', class: 'arrow-path data-flow', marker: 'arrow-data' },
+                { path: 'M 825 515 L 825 400 Q 825 360 830 330', class: 'arrow-path data-flow', marker: 'arrow-data' },
+                { path: 'M 1045 515 L 1045 400 Q 1045 360 1050 330', class: 'arrow-path data-flow', marker: 'arrow-data' },
+                
+                // Output gate connection to final multiply
+                { path: 'M 1075 330 L 1075 350 Q 1075 360 1322 350', class: 'arrow-path data-flow', marker: 'arrow-data' },
+            ];
+            
+            arrows.forEach(arrowData => {
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                path.setAttribute('d', arrowData.path);
+                path.setAttribute('class', arrowData.class);
+                if (arrowData.marker) {
+                    path.setAttribute('marker-end', `url(#${arrowData.marker})`);
+                }
+                arrowsGroup.appendChild(path);
+            });
+        }
+
+        // Main LSTM calculation function that processes one time step
+        function calculateLSTM() {
+            const x = parseFloat(document.getElementById('input').value);
+            const prevC = parseFloat(document.getElementById('prevLTM').value);
+            const prevH = parseFloat(document.getElementById('prevSTM').value);
+            
+            // These weights would be learned during training in a real neural network
+            const Wf = 0.5, Wi = 0.5, Wc = 1.0, Wo = 0.5;
+            const bf = 0.5, bi = 0.0, bc = 0.0, bo = 0.0;
+            
+            // Gate calculations with detailed intermediate values
+            const forgetInput = Wf * x + Wf * prevH + bf;
+            const forgetGate = sigmoid(forgetInput);
+            
+            const inputInput = Wi * x + Wi * prevH + bi;
+            const inputGate = sigmoid(inputInput);
+            
+            const candidateInput = Wc * x + Wc * prevH + bc;
+            const candidateGate = tanh(candidateInput);
+            
+            const newC = (forgetGate * prevC) + (inputGate * candidateGate);
+            
+            const outputInput = Wo * x + Wo * prevH + bo;
+            const outputGate = sigmoid(outputInput);
+            
+            const potentialH = tanh(newC);
+            const newH = outputGate * potentialH;
+            
+            // Update all display values in the diagram
+            document.getElementById('ltmStartText').textContent = prevC.toFixed(2);
+            document.getElementById('stmStartText').textContent = prevH.toFixed(2);
+            document.getElementById('inputText').textContent = x.toFixed(2);
+            
+            document.getElementById('forgetValueText').textContent = forgetGate.toFixed(2);
+            document.getElementById('inputGateValueText').textContent = inputGate.toFixed(2);
+            document.getElementById('candidateValueText').textContent = candidateGate.toFixed(2);
+            document.getElementById('outputGateValueText').textContent = outputGate.toFixed(2);
+            
+            document.getElementById('ltmEndText').textContent = newC.toFixed(2);
+            document.getElementById('stmEndText').textContent = newH.toFixed(2);
+            
+            // Draw the activation curves with dots showing current values
+            updateCurveWithDot('forgetCurve', 'forgetDot', forgetInput, 415, 260, 150, 140, true);
+            updateCurveWithDot('inputCurve', 'inputDot', inputInput, 635, 260, 150, 140, true);
+            updateCurveWithDot('candidateCurve', 'candidateDot', candidateInput, 855, 260, 150, 140, false);
+            updateCurveWithDot('outputCurve', 'outputDot', outputInput, 1075, 260, 150, 140, true);
+            
+            // Generate the detailed calculations explanation
+            displayDetailedCalculations(x, prevC, prevH, forgetInput, forgetGate, inputInput, inputGate,
+                                       candidateInput, candidateGate, outputInput, outputGate, newC, potentialH, newH);
+        }
+
+        // This function updates both the curve and the position of the dot indicator
+        function updateCurveWithDot(curveId, dotId, value, centerX, centerY, width, height, isSigmoid) {
+            const curve = document.getElementById(curveId);
+            const dot = document.getElementById(dotId);
+            
+            // Draw the appropriate curve type
+            if (isSigmoid) {
+                curve.setAttribute('d', createSigmoidPath(centerX, centerY, width, height));
+                
+                // Calculate dot position on sigmoid curve
+                const normalizedValue = (value + 5) / 10; // Map to 0-1 range
+                const dotX = centerX - width/2 + 15 + normalizedValue * (width - 30);
+                const dotY = centerY + height/2 - 20 - (sigmoid(value) * (height - 40));
+                
+                dot.setAttribute('cx', dotX);
+                dot.setAttribute('cy', dotY);
+            } else {
+                curve.setAttribute('d', createTanhPath(centerX, centerY, width, height));
+                
+                // Calculate dot position on tanh curve
+                const normalizedValue = (value + 4) / 8; // Map to 0-1 range
+                const dotX = centerX - width/2 + 15 + normalizedValue * (width - 30);
+                const dotY = centerY - (tanh(value) * (height/2 - 20));
+                
+                dot.setAttribute('cx', dotX);
+                dot.setAttribute('cy', dotY);
+            }
+        }
+
+        // This function generates the comprehensive step-by-step explanation
+        function displayDetailedCalculations(x, prevC, prevH, forgetInput, forgetGate, inputInput, inputGate,
+                                            candidateInput, candidateGate, outputInput, outputGate, newC, potentialH, newH) {
+            const section = document.getElementById('calculationsSection');
+            
+            section.innerHTML = `
+                <h2 class="calculations-title">📊 Detailed Mathematical Breakdown</h2>
+                
+                <div class="calc-card">
+                    <div class="calc-card-title">Step 1: Forget Gate Computation</div>
+                    <p class="calc-explanation">
+                        The forget gate determines what information from the previous long-term memory should be retained or discarded. It takes both the current input and the previous short-term memory, combines them with learned weights, and applies a sigmoid activation function to produce a value between zero and one. A value close to one means we should remember everything, while a value close to zero means we should forget most of the information.
+                    </p>
+                    <div class="calc-formula">
+                        Weighted Input = (0.5 × ${x.toFixed(2)}) + (0.5 × ${prevH.toFixed(2)}) + 0.5 = ${forgetInput.toFixed(3)}
+                    </div>
+                    <div class="calc-formula">
+                        Forget Gate = sigmoid(${forgetInput.toFixed(3)}) = ${forgetGate.toFixed(3)}
+                    </div>
+                    <div class="calc-result">
+                        The network will retain approximately ${(forgetGate * 100).toFixed(1)}% of the previous long-term memory
+                    </div>
+                </div>
+
+                <div class="calc-card">
+                    <div class="calc-card-title">Step 2: Input Gate Computation</div>
+                    <p class="calc-explanation">
+                        The input gate works alongside the candidate gate to control what new information should be added to the long-term memory. It produces a percentage value that filters how much of the candidate information will actually be stored. This selective updating allows the network to ignore irrelevant new information while incorporating important patterns.
+                    </p>
+                    <div class="calc-formula">
+                        Weighted Input = (0.5 × ${x.toFixed(2)}) + (0.5 × ${prevH.toFixed(2)}) + 0.0 = ${inputInput.toFixed(3)}
+                    </div>
+                    <div class="calc-formula">
+                        Input Gate = sigmoid(${inputInput.toFixed(3)}) = ${inputGate.toFixed(3)}
+                    </div>
+                    <div class="calc-result">
+                        The network will store approximately ${(inputGate * 100).toFixed(1)}% of the new candidate information
+                    </div>
+                </div>
+
+                <div class="calc-card">
+                    <div class="calc-card-title">Step 3: Candidate Memory Generation</div>
+                    <p class="calc-explanation">
+                        The candidate gate creates potential new memories based on the current input and previous short-term memory. Unlike the sigmoid gates which output percentages, this gate uses the hyperbolic tangent function which outputs values between negative one and positive one. This allows the network to both add to and subtract from the existing memory, providing flexibility in how information is updated.
+                    </p>
+                    <div class="calc-formula">
+                        Weighted Input = (1.0 × ${x.toFixed(2)}) + (1.0 × ${prevH.toFixed(2)}) + 0.0 = ${candidateInput.toFixed(3)}
+                    </div>
+                    <div class="calc-formula">
+                        Candidate Memory = tanh(${candidateInput.toFixed(3)}) = ${candidateGate.toFixed(3)}
+                    </div>
+                    <div class="calc-result">
+                        The candidate memory has a value of ${candidateGate.toFixed(3)}, which will be filtered by the input gate
+                    </div>
+                </div>
+
+                <div class="calc-card">
+                    <div class="calc-card-title">Step 4: Long-Term Memory Update</div>
+                    <p class="calc-explanation">
+                        This is where the actual memory update occurs. We take the previous long-term memory and multiply it by the forget gate to determine what to keep. Then we add the new candidate memory multiplied by the input gate. This elegant mechanism allows the LSTM to maintain information over many time steps while selectively incorporating new relevant information and forgetting outdated patterns.
+                    </p>
+                    <div class="calc-formula">
+                        Retained Memory = ${forgetGate.toFixed(3)} × ${prevC.toFixed(2)} = ${(forgetGate * prevC).toFixed(3)}
+                    </div>
+                    <div class="calc-formula">
+                        New Information = ${inputGate.toFixed(3)} × ${candidateGate.toFixed(3)} = ${(inputGate * candidateGate).toFixed(3)}
+                    </div>
+                    <div class="calc-formula">
+                        Updated Long-Term Memory = ${(forgetGate * prevC).toFixed(3)} + ${(inputGate * candidateGate).toFixed(3)} = ${newC.toFixed(3)}
+                    </div>
+                    <div class="calc-result">
+                        The new long-term memory state is ${newC.toFixed(3)}
+                    </div>
+                </div>
+
+                <div class="calc-card">
+                    <div class="calc-card-title">Step 5: Output Gate Computation</div>
+                    <p class="calc-explanation">
+                        The output gate determines what portion of the long-term memory should be revealed in the current output. Not all stored information needs to be exposed at every time step. This gate allows the network to keep some information hidden internally while selectively revealing relevant parts based on the current context provided by the input and previous short-term memory.
+                    </p>
+                    <div class="calc-formula">
+                        Weighted Input = (0.5 × ${x.toFixed(2)}) + (0.5 × ${prevH.toFixed(2)}) + 0.0 = ${outputInput.toFixed(3)}
+                    </div>
+                    <div class="calc-formula">
+                        Output Gate = sigmoid(${outputInput.toFixed(3)}) = ${outputGate.toFixed(3)}
+                    </div>
+                    <div class="calc-result">
+                        The network will reveal approximately ${(outputGate * 100).toFixed(1)}% of the processed memory
+                    </div>
+                </div>
+
+                <div class="calc-card">
+                    <div class="calc-card-title">Step 6: Short-Term Memory (Output) Generation</div>
+                    <p class="calc-explanation">
+                        The final step produces the short-term memory which serves as both the output of this LSTM cell and the hidden state that feeds into the next time step. We first apply the hyperbolic tangent function to the long-term memory to normalize it into a reasonable range. Then we multiply this by the output gate to filter what information should be revealed. This short-term memory captures what the network has learned to be relevant from both its long-term memory and the current input.
+                    </p>
+                    <div class="calc-formula">
+                        Normalized Memory = tanh(${newC.toFixed(3)}) = ${potentialH.toFixed(3)}
+                    </div>
+                    <div class="calc-formula">
+                        Short-Term Memory = ${outputGate.toFixed(3)} × ${potentialH.toFixed(3)} = ${newH.toFixed(3)}
+                    </div>
+                    <div class="calc-result">
+                        The final short-term memory output is ${newH.toFixed(3)}
+                    </div>
+                </div>
+
+                <div class="summary-card">
+                    <div class="summary-title">🎯 Summary of This Time Step</div>
+                    <div class="summary-content">
+                        <p style="margin-bottom: 15px;">
+                            We began with an input of <span class="highlight-value">${x.toFixed(2)}</span>, previous long-term memory of <span class="highlight-value">${prevC.toFixed(2)}</span>, and previous short-term memory of <span class="highlight-value">${prevH.toFixed(2)}</span>.
+                        </p>
+                        <p style="margin-bottom: 15px;">
+                            Through the four gates, the LSTM decided to retain <span class="highlight-value">${(forgetGate * 100).toFixed(1)}%</span> of old memories, incorporate <span class="highlight-value">${(inputGate * 100).toFixed(1)}%</span> of new candidate information, and reveal <span class="highlight-value">${(outputGate * 100).toFixed(1)}%</span> of the processed memory in the output.
+                        </p>
+                        <p style="font-size: 1.2em; border-top: 2px solid rgba(255,255,255,0.3); padding-top: 15px; margin-top: 15px;">
+                            <strong>Final Results:</strong><br>
+                            New Long-Term Memory: <span class="highlight-value">${newC.toFixed(3)}</span><br>
+                            New Short-Term Memory: <span class="highlight-value">${newH.toFixed(3)}</span>
+                        </p>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Event listeners for the slider controls
+        document.getElementById('input').addEventListener('input', function(e) {
+            document.getElementById('inputValue').textContent = parseFloat(e.target.value).toFixed(2);
+            calculateLSTM();
+        });
+
+        document.getElementById('prevLTM').addEventListener('input', function(e) {
+            document.getElementById('prevLTMValue').textContent = parseFloat(e.target.value).toFixed(2);
+            calculateLSTM();
+        });
+
+        document.getElementById('prevSTM').addEventListener('input', function(e) {
+            document.getElementById('prevSTMValue').textContent = parseFloat(e.target.value).toFixed(2);
+            calculateLSTM();
+        });
+
+        // Generate random values to explore different scenarios
+        function randomize() {
+            const randomValue = () => (Math.random() * 4 - 2).toFixed(1);
+            
+            document.getElementById('input').value = randomValue();
+            document.getElementById('prevLTM').value = randomValue();
+            document.getElementById('prevSTM').value = randomValue();
+            
+            document.getElementById('inputValue').textContent = parseFloat(document.getElementById('input').value).toFixed(2);
+            document.getElementById('prevLTMValue').textContent = parseFloat(document.getElementById('prevLTM').value).toFixed(2);
+            document.getElementById('prevSTMValue').textContent = parseFloat(document.getElementById('prevSTM').value).toFixed(2);
+            
+            calculateLSTM();
+        }
+
+        // Reset to default values
+        function reset() {
+            document.getElementById('input').value = 1.0;
+            document.getElementById('prevLTM').value = 0.5;
+            document.getElementById('prevSTM').value = 0.5;
+            
+            document.getElementById('inputValue').textContent = '1.00';
+            document.getElementById('prevLTMValue').textContent = '0.50';
+            document.getElementById('prevSTMValue').textContent = '0.50';
+            
+            calculateLSTM();
+        }
+
+        // Run a demonstration sequence showing how memory evolves
+        function runSequence() {
+            const sequence = [0.5, 1.0, 1.5, 2.0, 1.5, 1.0, 0.5, 0.0, -0.5, -1.0];
+            let step = 0;
+            
+            const interval = setInterval(() => {
+                if (step >= sequence.length) {
+                    clearInterval(interval);
+                    return;
+                }
+                
+                document.getElementById('input').value = sequence[step];
+                document.getElementById('inputValue').textContent = sequence[step].toFixed(2);
+                
+                calculateLSTM();
+                
+                // Feed the outputs back as inputs for the next time step
+                document.getElementById('prevLTM').value = document.getElementById('ltmEndText').textContent;
+                document.getElementById('prevSTM').value = document.getElementById('stmEndText').textContent;
+                document.getElementById('prevLTMValue').textContent = document.getElementById('ltmEndText').textContent;
+                document.getElementById('prevSTMValue').textContent = document.getElementById('stmEndText').textContent;
+                
+                step++;
+            }, 2000);
+        }
+
+        // Initialize everything when the page loads
+        window.addEventListener('load', function() {
+            drawAllArrows();
+            calculateLSTM();
+        });
+    </script>
+</body>
+</html>

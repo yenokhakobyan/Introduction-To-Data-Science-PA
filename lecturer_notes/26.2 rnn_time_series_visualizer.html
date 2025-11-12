@@ -1,0 +1,1343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RNN Time Series Visualizer - Recurrent Neural Network</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 2000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.95;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            padding: 10px 20px;
+            border-radius: 20px;
+            margin-top: 15px;
+            font-size: 0.9em;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            gap: 20px;
+            padding: 30px;
+        }
+        
+        .left-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .panel-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .card-title {
+            font-size: 1.2em;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #11998e;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .canvas-container {
+            background: white;
+            border: 3px solid #11998e;
+            border-radius: 12px;
+            padding: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .time-series-canvas {
+            width: 100%;
+            height: 200px;
+            display: block;
+            cursor: crosshair;
+            border-radius: 8px;
+        }
+        
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(17, 153, 142, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn-warning {
+            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+            color: white;
+        }
+        
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+            color: white;
+        }
+        
+        .stat-label {
+            font-size: 0.8em;
+            opacity: 0.9;
+            margin-bottom: 5px;
+        }
+        
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: 700;
+        }
+        
+        .progress-container {
+            margin-top: 15px;
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 25px;
+            background: #e9ecef;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #11998e, #38ef7d);
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 0.85em;
+        }
+        
+        .pattern-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .pattern-btn {
+            padding: 10px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+            color: #495057;
+        }
+        
+        .pattern-btn.active {
+            border-color: #11998e;
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+        }
+        
+        .pattern-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .visualization-area {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            min-height: 800px;
+        }
+        
+        .viz-section {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .viz-title {
+            font-size: 1.3em;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .chart-canvas {
+            width: 100%;
+            height: 300px;
+            display: block;
+        }
+        
+        .rnn-diagram {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 30px;
+            padding: 30px;
+            background: linear-gradient(to right, #f8f9fa, #e9ecef, #f8f9fa);
+            border-radius: 12px;
+            overflow-x: auto;
+        }
+        
+        .rnn-cell {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .cell-box {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(145deg, #ffffff, #f0f0f0);
+            border: 3px solid #11998e;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            position: relative;
+            transition: all 0.3s;
+        }
+        
+        .cell-box.active {
+            border-color: #38ef7d;
+            background: linear-gradient(145deg, #38ef7d, #11998e);
+            color: white;
+            transform: scale(1.1);
+            box-shadow: 0 8px 24px rgba(56, 239, 125, 0.4);
+        }
+        
+        .cell-label {
+            font-weight: 700;
+            font-size: 0.9em;
+        }
+        
+        .cell-value {
+            font-size: 1.2em;
+            font-weight: 700;
+        }
+        
+        .input-label {
+            font-size: 0.85em;
+            color: #6c757d;
+            font-weight: 600;
+            margin-top: 5px;
+        }
+        
+        .output-label {
+            font-size: 0.85em;
+            color: #6c757d;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .arrow-right {
+            font-size: 2em;
+            color: #11998e;
+            animation: pulse 2s infinite;
+        }
+        
+        .arrow-loop {
+            position: absolute;
+            top: -40px;
+            font-size: 2em;
+            color: #38ef7d;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+        
+        .prediction-display {
+            background: linear-gradient(145deg, #ffffff, #f8f9fa);
+            border: 3px solid #11998e;
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+        }
+        
+        .prediction-label {
+            font-size: 1em;
+            color: #6c757d;
+            margin-bottom: 10px;
+        }
+        
+        .prediction-value {
+            font-size: 3em;
+            font-weight: 700;
+            color: #11998e;
+            margin: 15px 0;
+        }
+        
+        .info-box {
+            background: #d1f2eb;
+            border-left: 4px solid #11998e;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 0.9em;
+            color: #0a6e5f;
+        }
+        
+        .sequence-display {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        
+        .sequence-item {
+            background: white;
+            border: 2px solid #11998e;
+            border-radius: 8px;
+            padding: 10px 15px;
+            font-weight: 700;
+            color: #11998e;
+            min-width: 60px;
+            text-align: center;
+        }
+        
+        .sequence-item.prediction {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            border-color: #38ef7d;
+        }
+        
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+        
+        .loading-content {
+            background: white;
+            padding: 50px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 500px;
+        }
+        
+        .loading-spinner {
+            width: 80px;
+            height: 80px;
+            border: 8px solid #e9ecef;
+            border-top-color: #11998e;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .loading-title {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .loading-text {
+            color: #6c757d;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .slider-container {
+            margin: 15px 0;
+        }
+        
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #495057;
+            font-size: 0.9em;
+        }
+        
+        .slider {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: #dee2e6;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #11998e;
+            cursor: pointer;
+        }
+        
+        .slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #11998e;
+            cursor: pointer;
+            border: none;
+        }
+        
+        @media (max-width: 1400px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="loading" class="loading-overlay">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <div class="loading-title">Initializing RNN</div>
+            <div class="loading-text">
+                Building Recurrent Neural Network<br>
+                Generating time series patterns<br>
+                Training on sequential data...
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1>🔄 RNN Time Series Visualizer</h1>
+            <p>Recurrent Neural Network for Sequential Pattern Recognition & Prediction</p>
+            <div id="statusBadge" class="status-badge hidden"></div>
+        </div>
+        
+        <div class="main-content">
+            <div class="left-panel">
+                <div class="panel-card">
+                    <div class="card-title">📈 Create Time Series</div>
+                    
+                    <div class="pattern-selector">
+                        <button class="pattern-btn active" onclick="app.selectPattern('sine')">
+                            🌊 Sine Wave
+                        </button>
+                        <button class="pattern-btn" onclick="app.selectPattern('linear')">
+                            📊 Linear
+                        </button>
+                        <button class="pattern-btn" onclick="app.selectPattern('exponential')">
+                            📈 Exponential
+                        </button>
+                        <button class="pattern-btn" onclick="app.selectPattern('random')">
+                            🎲 Random Walk
+                        </button>
+                        <button class="pattern-btn" onclick="app.selectPattern('square')">
+                            ▢ Square Wave
+                        </button>
+                        <button class="pattern-btn" onclick="app.selectPattern('sawtooth')">
+                            ◸ Sawtooth
+                        </button>
+                    </div>
+                    
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>Noise Level</span>
+                            <span id="noiseValue">0.1</span>
+                        </div>
+                        <input type="range" class="slider" id="noiseSlider" min="0" max="0.5" step="0.05" value="0.1" 
+                               oninput="app.updateNoise(this.value)">
+                    </div>
+                    
+                    <div class="canvas-container">
+                        <canvas id="timeSeriesCanvas" class="time-series-canvas"></canvas>
+                    </div>
+                    
+                    <div class="button-group">
+                        <button class="btn-secondary" onclick="app.generateData()">
+                            🔄 Regenerate
+                        </button>
+                        <button class="btn-primary" onclick="app.predictNext()">
+                            🔮 Predict Next
+                        </button>
+                    </div>
+                    
+                    <div class="info-box">
+                        💡 Select a pattern, adjust noise, and see RNN predictions!
+                    </div>
+                </div>
+                
+                <div class="panel-card">
+                    <div class="card-title">➕ Add Custom Sequence</div>
+                    
+                    <div style="margin-bottom: 10px; font-size: 0.9em; color: #6c757d;">
+                        Current sequence will be added to training data
+                    </div>
+                    
+                    <button class="btn-primary" onclick="app.addSequence()" style="width: 100%; margin-bottom: 10px;">
+                        ➕ Add to Training Set
+                    </button>
+                    
+                    <button class="btn-warning" onclick="app.retrainNetwork()" style="width: 100%;">
+                        🔄 Retrain Network
+                    </button>
+                    
+                    <div id="addedSequencesInfo" class="info-box" style="margin-top: 10px; display: none;">
+                        <strong id="addedCount">0</strong> sequences added
+                    </div>
+                </div>
+                
+                <div class="panel-card">
+                    <div class="card-title">📊 RNN Stats</div>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-label">Epochs</div>
+                            <div class="stat-value" id="epochValue">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Loss</div>
+                            <div class="stat-value" id="lossValue">-</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Sequences</div>
+                            <div class="stat-value" id="sequencesValue">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Hidden Size</div>
+                            <div class="stat-value">16</div>
+                        </div>
+                    </div>
+                    
+                    <div id="progressContainer" class="progress-container hidden">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: 600; color: #2c3e50; font-size: 0.9em;">
+                            <span>Training Progress</span>
+                            <span id="progressPercent">0%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressFill" style="width: 0%">
+                                <span id="progressText">Epoch 0/100</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="visualization-area">
+                <div class="viz-section">
+                    <div class="viz-title">🏗️ RNN Architecture</div>
+                    <div style="text-align: center; padding: 20px; background: #f8f9fa; border-radius: 10px; margin-bottom: 20px;">
+                        <div style="font-size: 1.1em; color: #495057; margin-bottom: 15px;">
+                            <strong>Sequence Length:</strong> 10 → <strong>Hidden Units:</strong> 16 → <strong>Output:</strong> 1
+                        </div>
+                        <div style="font-size: 0.9em; color: #6c757d;">
+                            RNN processes sequences one timestep at a time, maintaining hidden state
+                        </div>
+                    </div>
+                    
+                    <div id="rnnDiagram" class="rnn-diagram">
+                        <!-- RNN cells will be dynamically generated -->
+                    </div>
+                </div>
+                
+                <div class="viz-section">
+                    <div class="viz-title">📊 Prediction Visualization</div>
+                    <canvas id="predictionChart" class="chart-canvas"></canvas>
+                </div>
+                
+                <div id="predictionResult" class="viz-section hidden">
+                    <div class="viz-title">🎯 Prediction Result</div>
+                    <div class="prediction-display">
+                        <div class="prediction-label">Next Value Prediction</div>
+                        <div class="prediction-value" id="predictedValue">-</div>
+                        <div style="font-size: 1.1em; color: #495057; margin-top: 10px;">
+                            <strong>Confidence:</strong> <span id="confidenceValue">-</span>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 20px;">
+                        <div style="font-weight: 700; margin-bottom: 10px; color: #2c3e50;">Input Sequence:</div>
+                        <div class="sequence-display" id="inputSequence"></div>
+                    </div>
+                    
+                    <div style="margin-top: 15px;">
+                        <div style="font-weight: 700; margin-bottom: 10px; color: #2c3e50;">Predicted Next:</div>
+                        <div class="sequence-display">
+                            <div class="sequence-item prediction" id="predictionSequence">-</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="viz-section">
+                    <div class="viz-title">📈 Training History</div>
+                    <canvas id="lossChart" class="chart-canvas"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Utility functions
+        function tanh(x) {
+            const e2x = Math.exp(2 * x);
+            return (e2x - 1) / (e2x + 1);
+        }
+        
+        function sigmoid(x) {
+            return 1 / (1 + Math.exp(-Math.max(Math.min(x, 500), -500)));
+        }
+        
+        // Simple RNN implementation
+        class SimpleRNN {
+            constructor(inputSize, hiddenSize, outputSize) {
+                this.inputSize = inputSize;
+                this.hiddenSize = hiddenSize;
+                this.outputSize = outputSize;
+                
+                this.initWeights();
+            }
+            
+            initWeights() {
+                // Input to hidden weights
+                this.Wxh = this.randomMatrix(this.inputSize, this.hiddenSize, 0.1);
+                // Hidden to hidden weights (recurrent)
+                this.Whh = this.randomMatrix(this.hiddenSize, this.hiddenSize, 0.1);
+                // Hidden to output weights
+                this.Why = this.randomMatrix(this.hiddenSize, this.outputSize, 0.1);
+                
+                // Biases
+                this.bh = new Array(this.hiddenSize).fill(0);
+                this.by = new Array(this.outputSize).fill(0);
+                
+                // Hidden state
+                this.h = new Array(this.hiddenSize).fill(0);
+                this.hiddenStates = [];
+            }
+            
+            randomMatrix(rows, cols, scale) {
+                const matrix = [];
+                for (let i = 0; i < rows; i++) {
+                    matrix[i] = [];
+                    for (let j = 0; j < cols; j++) {
+                        matrix[i][j] = (Math.random() * 2 - 1) * scale;
+                    }
+                }
+                return matrix;
+            }
+            
+            forward(sequence) {
+                // Reset hidden state
+                this.h = new Array(this.hiddenSize).fill(0);
+                this.hiddenStates = [];
+                
+                let outputs = [];
+                
+                // Process sequence
+                for (let t = 0; t < sequence.length; t++) {
+                    const x = [sequence[t]];
+                    
+                    // Compute hidden state: h_t = tanh(Wxh * x_t + Whh * h_{t-1} + bh)
+                    const newH = new Array(this.hiddenSize);
+                    for (let i = 0; i < this.hiddenSize; i++) {
+                        let sum = this.bh[i];
+                        // Input contribution
+                        for (let j = 0; j < this.inputSize; j++) {
+                            sum += this.Wxh[j][i] * x[j];
+                        }
+                        // Recurrent contribution
+                        for (let j = 0; j < this.hiddenSize; j++) {
+                            sum += this.Whh[j][i] * this.h[j];
+                        }
+                        newH[i] = tanh(sum);
+                    }
+                    this.h = newH;
+                    this.hiddenStates.push([...this.h]);
+                    
+                    // Compute output: y_t = Why * h_t + by
+                    const y = new Array(this.outputSize);
+                    for (let i = 0; i < this.outputSize; i++) {
+                        let sum = this.by[i];
+                        for (let j = 0; j < this.hiddenSize; j++) {
+                            sum += this.Why[j][i] * this.h[j];
+                        }
+                        y[i] = sum;
+                    }
+                    outputs.push(y[0]);
+                }
+                
+                return outputs;
+            }
+            
+            predict(sequence) {
+                const outputs = this.forward(sequence);
+                return outputs[outputs.length - 1]; // Return last output
+            }
+            
+            train(sequences, epochs, learningRate = 0.01) {
+                const losses = [];
+                
+                for (let e = 0; e < epochs; e++) {
+                    let totalLoss = 0;
+                    
+                    for (const seq of sequences) {
+                        const input = seq.slice(0, -1);
+                        const target = seq[seq.length - 1];
+                        
+                        const prediction = this.predict(input);
+                        const error = prediction - target;
+                        totalLoss += error * error;
+                        
+                        // Simple gradient descent (simplified for visualization)
+                        // In practice, would use BPTT (Backpropagation Through Time)
+                        const gradient = 2 * error * learningRate;
+                        
+                        // Update output weights
+                        for (let i = 0; i < this.hiddenSize; i++) {
+                            this.Why[i][0] -= gradient * this.h[i];
+                        }
+                    }
+                    
+                    const avgLoss = totalLoss / sequences.length;
+                    losses.push(avgLoss);
+                }
+                
+                return losses;
+            }
+        }
+        
+        // Pattern generators
+        const Patterns = {
+            sine: (t, noise) => Math.sin(t * 0.5) + (Math.random() - 0.5) * noise,
+            linear: (t, noise) => t * 0.1 + (Math.random() - 0.5) * noise,
+            exponential: (t, noise) => Math.exp(t * 0.05) * 0.1 + (Math.random() - 0.5) * noise,
+            random: (t, noise) => {
+                if (t === 0) Patterns._randomWalk = 0;
+                Patterns._randomWalk += (Math.random() - 0.5) * (0.5 + noise);
+                return Patterns._randomWalk;
+            },
+            square: (t, noise) => (Math.sin(t * 0.3) > 0 ? 1 : -1) + (Math.random() - 0.5) * noise,
+            sawtooth: (t, noise) => ((t % 20) / 10 - 1) + (Math.random() - 0.5) * noise
+        };
+        
+        // Main App
+        class RNNApp {
+            constructor() {
+                this.rnn = new SimpleRNN(1, 16, 1);
+                this.sequences = [];
+                this.newSequences = [];
+                this.currentPattern = 'sine';
+                this.noiseLevel = 0.1;
+                this.currentData = [];
+                this.trainingLosses = [];
+                this.sequenceLength = 10;
+                
+                this.init();
+            }
+            
+            async init() {
+                this.setupCanvas();
+                await this.initializeAndTrain();
+            }
+            
+            setupCanvas() {
+                this.canvas = document.getElementById('timeSeriesCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.canvas.width = this.canvas.offsetWidth;
+                this.canvas.height = 200;
+            }
+            
+            async initializeAndTrain() {
+                await this.sleep(500);
+                
+                // Generate training sequences
+                console.log('Generating time series sequences...');
+                const numSequences = 50;
+                
+                for (let i = 0; i < numSequences; i++) {
+                    const pattern = ['sine', 'linear', 'exponential'][i % 3];
+                    const sequence = this.generateSequence(pattern, 0.1);
+                    this.sequences.push(sequence);
+                }
+                
+                document.getElementById('sequencesValue').textContent = this.sequences.length;
+                
+                await this.sleep(300);
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('progressContainer').classList.remove('hidden');
+                
+                // Train RNN
+                console.log('Training RNN...');
+                const epochs = 100;
+                
+                for (let e = 0; e < epochs; e++) {
+                    const losses = this.rnn.train(this.sequences, 1, 0.01);
+                    this.trainingLosses.push(losses[0]);
+                    
+                    const loss = losses[0].toFixed(4);
+                    const progress = ((e + 1) / epochs) * 100;
+                    
+                    document.getElementById('epochValue').textContent = e + 1;
+                    document.getElementById('lossValue').textContent = loss;
+                    document.getElementById('progressPercent').textContent = progress.toFixed(0) + '%';
+                    document.getElementById('progressFill').style.width = progress + '%';
+                    document.getElementById('progressText').textContent = `Epoch ${e + 1}/${epochs}`;
+                    
+                    if (e % 5 === 0) {
+                        this.drawLossChart();
+                        await this.sleep(10);
+                    }
+                }
+                
+                document.getElementById('progressContainer').classList.add('hidden');
+                const badge = document.getElementById('statusBadge');
+                badge.textContent = `✅ RNN Trained • Loss: ${this.trainingLosses[this.trainingLosses.length - 1].toFixed(4)}`;
+                badge.classList.remove('hidden');
+                
+                // Generate initial data
+                this.generateData();
+                this.drawLossChart();
+                this.drawRNNDiagram();
+            }
+            
+            generateSequence(pattern, noise) {
+                const sequence = [];
+                for (let t = 0; t < this.sequenceLength + 1; t++) {
+                    const value = Patterns[pattern](t, noise);
+                    sequence.push(value);
+                }
+                return sequence;
+            }
+            
+            generateData() {
+                this.currentData = this.generateSequence(this.currentPattern, this.noiseLevel);
+                this.drawTimeSeries();
+                this.drawPredictionChart();
+            }
+            
+            drawTimeSeries() {
+                const width = this.canvas.width;
+                const height = this.canvas.height;
+                
+                this.ctx.clearRect(0, 0, width, height);
+                
+                // Find min/max for scaling
+                const min = Math.min(...this.currentData);
+                const max = Math.max(...this.currentData);
+                const range = max - min || 1;
+                const padding = 20;
+                
+                // Draw grid
+                this.ctx.strokeStyle = '#e9ecef';
+                this.ctx.lineWidth = 1;
+                for (let i = 0; i <= 5; i++) {
+                    const y = padding + (height - 2 * padding) * i / 5;
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(padding, y);
+                    this.ctx.lineTo(width - padding, y);
+                    this.ctx.stroke();
+                }
+                
+                // Draw line
+                this.ctx.strokeStyle = '#11998e';
+                this.ctx.lineWidth = 3;
+                this.ctx.beginPath();
+                
+                for (let i = 0; i < this.currentData.length; i++) {
+                    const x = padding + (width - 2 * padding) * i / (this.currentData.length - 1);
+                    const y = height - padding - ((this.currentData[i] - min) / range) * (height - 2 * padding);
+                    
+                    if (i === 0) {
+                        this.ctx.moveTo(x, y);
+                    } else {
+                        this.ctx.lineTo(x, y);
+                    }
+                }
+                this.ctx.stroke();
+                
+                // Draw points
+                this.ctx.fillStyle = '#11998e';
+                for (let i = 0; i < this.currentData.length; i++) {
+                    const x = padding + (width - 2 * padding) * i / (this.currentData.length - 1);
+                    const y = height - padding - ((this.currentData[i] - min) / range) * (height - 2 * padding);
+                    
+                    this.ctx.beginPath();
+                    this.ctx.arc(x, y, 4, 0, Math.PI * 2);
+                    this.ctx.fill();
+                }
+            }
+            
+            selectPattern(pattern) {
+                this.currentPattern = pattern;
+                
+                // Update button styles
+                document.querySelectorAll('.pattern-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                event.target.classList.add('active');
+                
+                this.generateData();
+            }
+            
+            updateNoise(value) {
+                this.noiseLevel = parseFloat(value);
+                document.getElementById('noiseValue').textContent = value;
+                this.generateData();
+            }
+            
+            predictNext() {
+                const input = this.currentData.slice(0, -1);
+                const prediction = this.rnn.predict(input);
+                const actual = this.currentData[this.currentData.length - 1];
+                
+                // Calculate confidence (inverse of error)
+                const error = Math.abs(prediction - actual);
+                const confidence = Math.max(0, 100 - error * 50);
+                
+                // Update UI
+                document.getElementById('predictedValue').textContent = prediction.toFixed(3);
+                document.getElementById('confidenceValue').textContent = confidence.toFixed(1) + '%';
+                document.getElementById('predictionSequence').textContent = prediction.toFixed(3);
+                
+                // Show input sequence
+                const inputSeq = document.getElementById('inputSequence');
+                inputSeq.innerHTML = '';
+                for (const val of input) {
+                    const item = document.createElement('div');
+                    item.className = 'sequence-item';
+                    item.textContent = val.toFixed(2);
+                    inputSeq.appendChild(item);
+                }
+                
+                document.getElementById('predictionResult').classList.remove('hidden');
+                
+                // Update prediction chart
+                this.drawPredictionChart(prediction);
+                
+                // Animate RNN diagram
+                this.animateRNNDiagram(input);
+            }
+            
+            drawPredictionChart(prediction = null) {
+                const canvas = document.getElementById('predictionChart');
+                const ctx = canvas.getContext('2d');
+                canvas.width = canvas.offsetWidth;
+                canvas.height = 300;
+                
+                const width = canvas.width;
+                const height = canvas.height;
+                const padding = 50;
+                
+                ctx.clearRect(0, 0, width, height);
+                
+                // Draw axes
+                ctx.strokeStyle = '#dee2e6';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(padding, padding);
+                ctx.lineTo(padding, height - padding);
+                ctx.lineTo(width - padding, height - padding);
+                ctx.stroke();
+                
+                // Labels
+                ctx.fillStyle = '#495057';
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('Time Steps', width / 2, height - 10);
+                ctx.save();
+                ctx.translate(15, height / 2);
+                ctx.rotate(-Math.PI / 2);
+                ctx.fillText('Value', 0, 0);
+                ctx.restore();
+                
+                // Find min/max
+                const allData = prediction !== null ? [...this.currentData, prediction] : this.currentData;
+                const min = Math.min(...allData);
+                const max = Math.max(...allData);
+                const range = max - min || 1;
+                
+                // Draw historical data
+                ctx.strokeStyle = '#11998e';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                
+                for (let i = 0; i < this.currentData.length; i++) {
+                    const x = padding + (width - 2 * padding) * i / (allData.length - 1);
+                    const y = height - padding - ((this.currentData[i] - min) / range) * (height - 2 * padding);
+                    
+                    if (i === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                }
+                ctx.stroke();
+                
+                // Draw points
+                ctx.fillStyle = '#11998e';
+                for (let i = 0; i < this.currentData.length; i++) {
+                    const x = padding + (width - 2 * padding) * i / (allData.length - 1);
+                    const y = height - padding - ((this.currentData[i] - min) / range) * (height - 2 * padding);
+                    
+                    ctx.beginPath();
+                    ctx.arc(x, y, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                
+                // Draw prediction
+                if (prediction !== null) {
+                    const x = padding + (width - 2 * padding) * (allData.length - 1) / (allData.length - 1);
+                    const y = height - padding - ((prediction - min) / range) * (height - 2 * padding);
+                    
+                    // Dashed line to prediction
+                    const lastX = padding + (width - 2 * padding) * (this.currentData.length - 1) / (allData.length - 1);
+                    const lastY = height - padding - ((this.currentData[this.currentData.length - 1] - min) / range) * (height - 2 * padding);
+                    
+                    ctx.strokeStyle = '#38ef7d';
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([5, 5]);
+                    ctx.beginPath();
+                    ctx.moveTo(lastX, lastY);
+                    ctx.lineTo(x, y);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                    
+                    // Prediction point
+                    ctx.fillStyle = '#38ef7d';
+                    ctx.beginPath();
+                    ctx.arc(x, y, 8, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Label
+                    ctx.fillStyle = '#38ef7d';
+                    ctx.font = 'bold 14px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('Prediction', x, y - 15);
+                }
+            }
+            
+            drawRNNDiagram() {
+                const container = document.getElementById('rnnDiagram');
+                container.innerHTML = '';
+                
+                const numCells = 5;
+                
+                for (let i = 0; i < numCells; i++) {
+                    // Create RNN cell
+                    const cell = document.createElement('div');
+                    cell.className = 'rnn-cell';
+                    cell.id = `rnn-cell-${i}`;
+                    
+                    // Output label (above)
+                    const outputLabel = document.createElement('div');
+                    outputLabel.className = 'output-label';
+                    outputLabel.textContent = `h${i}`;
+                    cell.appendChild(outputLabel);
+                    
+                    // Cell box
+                    const box = document.createElement('div');
+                    box.className = 'cell-box';
+                    box.id = `cell-box-${i}`;
+                    box.innerHTML = `
+                        <div class="cell-label">RNN</div>
+                        <div class="cell-value" id="cell-value-${i}">0.00</div>
+                    `;
+                    
+                    // Recurrent arrow
+                    if (i > 0) {
+                        const arrow = document.createElement('div');
+                        arrow.className = 'arrow-loop';
+                        arrow.textContent = '↰';
+                        box.appendChild(arrow);
+                    }
+                    
+                    cell.appendChild(box);
+                    
+                    // Input label (below)
+                    const inputLabel = document.createElement('div');
+                    inputLabel.className = 'input-label';
+                    inputLabel.textContent = `x${i}`;
+                    cell.appendChild(inputLabel);
+                    
+                    container.appendChild(cell);
+                    
+                    // Arrow between cells
+                    if (i < numCells - 1) {
+                        const arrow = document.createElement('div');
+                        arrow.className = 'arrow-right';
+                        arrow.textContent = '→';
+                        container.appendChild(arrow);
+                    }
+                }
+            }
+            
+            async animateRNNDiagram(input) {
+                // Process sequence and animate
+                const hiddenStates = this.rnn.hiddenStates;
+                
+                for (let i = 0; i < Math.min(5, input.length); i++) {
+                    const cell = document.getElementById(`cell-box-${i}`);
+                    const value = document.getElementById(`cell-value-${i}`);
+                    
+                    cell.classList.add('active');
+                    
+                    // Show average hidden state value
+                    if (hiddenStates[i]) {
+                        const avg = hiddenStates[i].reduce((a, b) => a + b, 0) / hiddenStates[i].length;
+                        value.textContent = avg.toFixed(2);
+                    }
+                    
+                    await this.sleep(300);
+                    
+                    cell.classList.remove('active');
+                }
+            }
+            
+            drawLossChart() {
+                const canvas = document.getElementById('lossChart');
+                const ctx = canvas.getContext('2d');
+                canvas.width = canvas.offsetWidth;
+                canvas.height = 300;
+                
+                const width = canvas.width;
+                const height = canvas.height;
+                const padding = 50;
+                
+                ctx.clearRect(0, 0, width, height);
+                
+                if (this.trainingLosses.length === 0) return;
+                
+                // Draw axes
+                ctx.strokeStyle = '#dee2e6';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(padding, padding);
+                ctx.lineTo(padding, height - padding);
+                ctx.lineTo(width - padding, height - padding);
+                ctx.stroke();
+                
+                // Labels
+                ctx.fillStyle = '#495057';
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('Epochs', width / 2, height - 10);
+                ctx.save();
+                ctx.translate(15, height / 2);
+                ctx.rotate(-Math.PI / 2);
+                ctx.fillText('Loss', 0, 0);
+                ctx.restore();
+                
+                // Find min/max
+                const min = Math.min(...this.trainingLosses);
+                const max = Math.max(...this.trainingLosses);
+                const range = max - min || 1;
+                
+                // Draw line
+                ctx.strokeStyle = '#11998e';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                
+                for (let i = 0; i < this.trainingLosses.length; i++) {
+                    const x = padding + (width - 2 * padding) * i / (this.trainingLosses.length - 1);
+                    const y = height - padding - ((this.trainingLosses[i] - min) / range) * (height - 2 * padding);
+                    
+                    if (i === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                }
+                ctx.stroke();
+            }
+            
+            addSequence() {
+                if (this.currentData.length === 0) {
+                    alert('Please generate data first!');
+                    return;
+                }
+                
+                this.sequences.push([...this.currentData]);
+                this.newSequences.push([...this.currentData]);
+                
+                document.getElementById('sequencesValue').textContent = this.sequences.length;
+                document.getElementById('addedCount').textContent = this.newSequences.length;
+                document.getElementById('addedSequencesInfo').style.display = 'block';
+                
+                // Success feedback
+                const btn = event.target;
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '✅ Added!';
+                btn.style.background = 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.style.background = '';
+                }, 1500);
+                
+                // Generate new data
+                this.generateData();
+            }
+            
+            async retrainNetwork() {
+                if (this.newSequences.length === 0) {
+                    alert('No new sequences to train on! Add some sequences first.');
+                    return;
+                }
+                
+                const btn = event.target;
+                const originalText = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '⏳ Retraining...';
+                
+                document.getElementById('progressContainer').classList.remove('hidden');
+                
+                const epochs = 50;
+                
+                for (let e = 0; e < epochs; e++) {
+                    const losses = this.rnn.train(this.sequences, 1, 0.01);
+                    this.trainingLosses.push(losses[0]);
+                    
+                    const loss = losses[0].toFixed(4);
+                    const progress = ((e + 1) / epochs) * 100;
+                    
+                    document.getElementById('epochValue').textContent = parseInt(document.getElementById('epochValue').textContent) + 1;
+                    document.getElementById('lossValue').textContent = loss;
+                    document.getElementById('progressPercent').textContent = progress.toFixed(0) + '%';
+                    document.getElementById('progressFill').style.width = progress + '%';
+                    document.getElementById('progressText').textContent = `Retraining ${e + 1}/${epochs}`;
+                    
+                    if (e % 3 === 0) {
+                        this.drawLossChart();
+                        await this.sleep(10);
+                    }
+                }
+                
+                document.getElementById('progressContainer').classList.add('hidden');
+                const badge = document.getElementById('statusBadge');
+                badge.textContent = `✅ RNN Retrained • Loss: ${this.trainingLosses[this.trainingLosses.length - 1].toFixed(4)} • ${this.sequences.length} sequences`;
+                
+                this.newSequences = [];
+                document.getElementById('addedSequencesInfo').style.display = 'none';
+                
+                this.drawLossChart();
+                
+                btn.disabled = false;
+                btn.innerHTML = '✅ Retrain Complete!';
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                }, 2000);
+            }
+            
+            sleep(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+        }
+
+        // Initialize app when page loads
+        let app;
+        window.addEventListener('load', () => {
+            app = new RNNApp();
+        });
+    </script>
+</body>
+</html>

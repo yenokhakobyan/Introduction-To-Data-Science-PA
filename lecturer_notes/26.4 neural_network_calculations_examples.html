@@ -1,0 +1,1250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neural Network Calculations - Step-by-Step Visualization</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.95;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        .tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 3px solid #dee2e6;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 20px;
+            text-align: center;
+            font-weight: 700;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #f8f9fa;
+            border: none;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        .tab:hover {
+            background: #e9ecef;
+        }
+        
+        .tab.active {
+            background: white;
+            color: #1e3c72;
+            border-bottom: 4px solid #1e3c72;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .calc-section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border-left: 5px solid #1e3c72;
+        }
+        
+        .section-title {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: #1e3c72;
+            margin-bottom: 15px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        .step {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid #2a5298;
+        }
+        
+        .step-number {
+            display: inline-block;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 35px;
+            font-weight: 700;
+            margin-right: 10px;
+        }
+        
+        .step-title {
+            font-weight: 700;
+            font-size: 1.1em;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        .formula {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 1.05em;
+            overflow-x: auto;
+            border-radius: 4px;
+        }
+        
+        .calculation {
+            background: #fff3e0;
+            border-left: 4px solid #ff9800;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 1.05em;
+            overflow-x: auto;
+            border-radius: 4px;
+        }
+        
+        .result {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 1.1em;
+            font-weight: 700;
+            border-radius: 4px;
+        }
+        
+        .matrix {
+            display: inline-block;
+            border-left: 2px solid #333;
+            border-right: 2px solid #333;
+            padding: 5px 10px;
+            margin: 5px;
+        }
+        
+        .matrix-row {
+            margin: 3px 0;
+        }
+        
+        table {
+            border-collapse: collapse;
+            margin: 15px 0;
+            width: 100%;
+        }
+        
+        th, td {
+            border: 2px solid #dee2e6;
+            padding: 12px;
+            text-align: center;
+        }
+        
+        th {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            font-weight: 700;
+        }
+        
+        .highlight {
+            background: #fff3cd;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-weight: 700;
+        }
+        
+        .note {
+            background: #e7f3ff;
+            border-left: 4px solid #0066cc;
+            padding: 15px;
+            margin: 15px 0;
+            font-style: italic;
+            border-radius: 4px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        .data-input {
+            background: white;
+            border: 2px solid #1e3c72;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .input-label {
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 8px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        .visual-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(40px, 1fr));
+            gap: 5px;
+            margin: 15px 0;
+        }
+        
+        .grid-cell {
+            aspect-ratio: 1;
+            border: 1px solid #dee2e6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.9em;
+            border-radius: 4px;
+        }
+        
+        .grid-cell.active {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+        }
+        
+        .arrow-down {
+            text-align: center;
+            font-size: 2em;
+            color: #1e3c72;
+            margin: 10px 0;
+        }
+        
+        code {
+            background: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            color: #d63384;
+        }
+        
+        .comparison-table {
+            margin: 20px 0;
+        }
+        
+        .comparison-table th {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        }
+        
+        .comparison-table td {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔢 Neural Network Math Visualizer</h1>
+            <p>Step-by-Step Calculations for CNN, RNN, and LSTM</p>
+        </div>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('cnn')">
+                🔲 CNN Calculations
+            </button>
+            <button class="tab" onclick="showTab('rnn')">
+                🔄 RNN Calculations
+            </button>
+            <button class="tab" onclick="showTab('lstm')">
+                🧠 LSTM Calculations
+            </button>
+        </div>
+        
+        <div class="content">
+            <!-- CNN TAB -->
+            <div id="cnn" class="tab-content active">
+                <div class="calc-section">
+                    <div class="section-title">📊 Input Data: Small 5×5 Image</div>
+                    
+                    <div class="data-input">
+                        <div class="input-label">Input Image (Grayscale):</div>
+                        <table>
+                            <tr>
+                                <td>1</td><td>2</td><td>3</td><td>2</td><td>1</td>
+                            </tr>
+                            <tr>
+                                <td>0</td><td>1</td><td>2</td><td>1</td><td>0</td>
+                            </tr>
+                            <tr>
+                                <td>1</td><td>2</td><td>4</td><td>2</td><td>1</td>
+                            </tr>
+                            <tr>
+                                <td>0</td><td>1</td><td>2</td><td>1</td><td>0</td>
+                            </tr>
+                            <tr>
+                                <td>1</td><td>2</td><td>3</td><td>2</td><td>1</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="calc-section">
+                    <div class="section-title">Step 1: Convolution Operation</div>
+                    
+                    <div class="step">
+                        <div class="step-title">
+                            <span class="step-number">1</span>
+                            Define the Filter/Kernel
+                        </div>
+                        
+                        <div class="note">
+                            We'll use a 3×3 edge detection filter (vertical edge detector)
+                        </div>
+                        
+                        <div class="data-input">
+                            <div class="input-label">Filter (3×3):</div>
+                            <table style="width: auto; margin: 10px auto;">
+                                <tr>
+                                    <td class="highlight">-1</td><td>0</td><td class="highlight">1</td>
+                                </tr>
+                                <tr>
+                                    <td class="highlight">-1</td><td>0</td><td class="highlight">1</td>
+                                </tr>
+                                <tr>
+                                    <td class="highlight">-1</td><td>0</td><td class="highlight">1</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="step">
+                        <div class="step-title">
+                            <span class="step-number">2</span>
+                            Compute Convolution (Top-Left Position)
+                        </div>
+                        
+                        <div class="note">
+                            We slide the filter over the image and compute element-wise multiplication + sum
+                        </div>
+                        
+                        <div class="formula">
+                            <strong>Formula:</strong><br>
+                            Output[i,j] = Σ Σ Filter[m,n] × Input[i+m, j+n]
+                        </div>
+                        
+                        <div class="calculation">
+                            <strong>Position (0,0) - Top-Left 3×3 region:</strong><br><br>
+                            
+                            Input region:<br>
+                            [1  2  3]<br>
+                            [0  1  2]<br>
+                            [1  2  4]<br><br>
+                            
+                            Filter:<br>
+                            [-1  0  1]<br>
+                            [-1  0  1]<br>
+                            [-1  0  1]<br><br>
+                            
+                            Element-wise multiplication:<br>
+                            = (1×-1) + (2×0) + (3×1) +<br>
+                            &nbsp;&nbsp;(0×-1) + (1×0) + (2×1) +<br>
+                            &nbsp;&nbsp;(1×-1) + (2×0) + (4×1)<br><br>
+                            
+                            = -1 + 0 + 3 + 0 + 0 + 2 + -1 + 0 + 4
+                        </div>
+                        
+                        <div class="result">
+                            ✓ Output[0,0] = 7
+                        </div>
+                    </div>
+                    
+                    <div class="step">
+                        <div class="step-title">
+                            <span class="step-number">3</span>
+                            Compute All Positions (Stride = 1)
+                        </div>
+                        
+                        <div class="calculation">
+                            <strong>Position (0,1) - Shifted right by 1:</strong><br><br>
+                            
+                            Input region:<br>
+                            [2  3  2]<br>
+                            [1  2  1]<br>
+                            [2  4  2]<br><br>
+                            
+                            = (2×-1) + (3×0) + (2×1) +<br>
+                            &nbsp;&nbsp;(1×-1) + (2×0) + (1×1) +<br>
+                            &nbsp;&nbsp;(2×-1) + (4×0) + (2×1)<br><br>
+                            
+                            = -2 + 0 + 2 + -1 + 0 + 1 + -2 + 0 + 2
+                        </div>
+                        
+                        <div class="result">
+                            ✓ Output[0,1] = 0
+                        </div>
+                        
+                        <div class="calculation">
+                            <strong>Position (0,2) - Further right:</strong><br><br>
+                            
+                            Input region:<br>
+                            [3  2  1]<br>
+                            [2  1  0]<br>
+                            [4  2  1]<br><br>
+                            
+                            = (3×-1) + (2×0) + (1×1) +<br>
+                            &nbsp;&nbsp;(2×-1) + (1×0) + (0×1) +<br>
+                            &nbsp;&nbsp;(4×-1) + (2×0) + (1×1)<br><br>
+                            
+                            = -3 + 0 + 1 + -2 + 0 + 0 + -4 + 0 + 1
+                        </div>
+                        
+                        <div class="result">
+                            ✓ Output[0,2] = -7
+                        </div>
+                        
+                        <div class="note">
+                            <strong>Continuing this process for all positions...</strong><br>
+                            With a 5×5 input and 3×3 filter (stride=1), output size = (5-3+1) × (5-3+1) = 3×3
+                        </div>
+                        
+                        <div class="data-input">
+                            <div class="input-label">Complete Convolution Output (3×3):</div>
+                            <table style="width: auto; margin: 10px auto;">
+                                <tr>
+                                    <td class="highlight">7</td><td class="highlight">0</td><td class="highlight">-7</td>
+                                </tr>
+                                <tr>
+                                    <td class="highlight">4</td><td class="highlight">0</td><td class="highlight">-4</td>
+                                </tr>
+                                <tr>
+                                    <td class="highlight">7</td><td class="highlight">0</td><td class="highlight">-7</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="calc-section">
+                    <div class="section-title">Step 2: Activation Function (ReLU)</div>
+                    
+                    <div class="step">
+                        <div class="step-title">
+                            <span class="step-number">4</span>
+                            Apply ReLU: max(0, x)
+                        </div>
+                        
+                        <div class="formula">
+                            <strong>ReLU Formula:</strong><br>
+                            ReLU(x) = max(0, x) = { x if x > 0, 0 if x ≤ 0 }
+                        </div>
+                        
+                        <div class="calculation">
+                            <strong>Apply to each element:</strong><br><br>
+                            
+                            ReLU(7) = max(0, 7) = 7<br>
+                            ReLU(0) = max(0, 0) = 0<br>
+                            ReLU(-7) = max(0, -7) = 0<br>
+                            ReLU(4) = max(0, 4) = 4<br>
+                            ReLU(-4) = max(0, -4) = 0<br>
+                        </div>
+                        
+                        <div class="data-input">
+                            <div class="input-label">After ReLU (3×3):</div>
+                            <table style="width: auto; margin: 10px auto;">
+                                <tr>
+                                    <td class="highlight">7</td><td class="highlight">0</td><td class="highlight">0</td>
+                                </tr>
+                                <tr>
+                                    <td class="highlight">4</td><td class="highlight">0</td><td class="highlight">0</td>
+                                </tr>
+                                <tr>
+                                    <td class="highlight">7</td><td class="highlight">0</td><td class="highlight">0</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="calc-section">
+                    <div class="section-title">Step 3: Max Pooling</div>
+                    
+                    <div class="step">
+                        <div class="step-title">
+                            <span class="step-number">5</span>
+                            Apply 2×2 Max Pooling
+                        </div>
+                        
+                        <div class="note">
+                            Max pooling takes the maximum value from each 2×2 region
+                        </div>
+                        
+                        <div class="calculation">
+                            <strong>Top-Left 2×2 Region:</strong><br><br>
+                            
+                            [7  0]<br>
+                            [4  0]<br><br>
+                            
+                            max(7, 0, 4, 0) = 7
+                        </div>
+                        
+                        <div class="result">
+                            ✓ Pooled[0,0] = 7
+                        </div>
+                        
+                        <div class="calculation">
+                            <strong>Top-Right 2×2 Region:</strong><br><br>
+                            
+                            [0  0]<br>
+                            [0  0]<br><br>
+                            
+                            max(0, 0, 0, 0) = 0
+                        </div>
+                        
+                        <div class="result">
+                            ✓ Pooled[0,1] = 0
+                        </div>
+                        
+                        <div class="note">
+                            <strong>Note:</strong> With 3×3 input and 2×2 pooling (stride=2), we get non-overlapping regions.<br>
+                            We can only fit one complete 2×2 pool per dimension: floor(3/2) = 1
+                        </div>
+                        
+                        <div class="data-input">
+                            <div class="input-label">After Max Pooling (1×1 or 2×2 with overlap):</div>
+                            <div class="note">
+                                For demonstration, let's use overlapping 2×2 pools (stride=1):<br>
+                                This gives us a 2×2 output
+                            </div>
+                            <table style="width: auto; margin: 10px auto;">
+                                <tr>
+                                    <td class="highlight">7</td><td class="highlight">0</td>
+                                </tr>
+                                <tr>
+                                    <td class="highlight">7</td><td class="highlight">0</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="calc-section">
+                    <div class="section-title">Summary: CNN Forward Pass</div>
+                    
+                    <div class="note">
+                        <strong>Complete Pipeline:</strong><br><br>
+                        1. <strong>Input:</strong> 5×5 image<br>
+                        2. <strong>Convolution:</strong> 3×3 filter → 3×3 feature map<br>
+                        3. <strong>ReLU:</strong> Remove negative values → 3×3 activated map<br>
+                        4. <strong>Max Pooling:</strong> 2×2 window → 2×2 pooled map<br><br>
+                        
+                        <strong>Output:</strong> 2×2 feature map ready for next layer or flattening
+                    </div>
+                </div>
+            </div>
+            
+            <!-- RNN TAB -->
+            <div id="rnn" class="tab-content">
+                <div class="calc-section">
+                    <div class="section-title">📊 Input Data: Simple Sequence</div>
+                    
+                    <div class="data-input">
+                        <div class="input-label">Input Sequence (3 timesteps):</div>
+                        <table style="width: auto; margin: 10px auto;">
+                            <tr>
+                                <th>Time t=0</th>
+                                <th>Time t=1</th>
+                                <th>Time t=2</th>
+                            </tr>
+                            <tr>
+                                <td class="highlight">0.5</td>
+                                <td class="highlight">0.8</td>
+                                <td class="highlight">0.3</td>
+                            </tr>
+                        </table>
+                        
+                        <div class="note" style="margin-top: 15px;">
+                            Each timestep has 1 input value (could be temperature, stock price, etc.)
+                        </div>
+                    </div>
+                    
+                    <div class="data-input">
+                        <div class="input-label">RNN Parameters:</div>
+                        <table>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Value</th>
+                                <th>Description</th>
+                            </tr>
+                            <tr>
+                                <td><code>W_xh</code></td>
+                                <td class="highlight">0.5</td>
+                                <td>Input to hidden weight</td>
+                            </tr>
+                            <tr>
+                                <td><code>W_hh</code></td>
+                                <td class="highlight">0.8</td>
+                                <td>Hidden to hidden (recurrent) weight</td>
+                            </tr>
+                            <tr>
+                                <td><code>W_hy</code></td>
+                                <td class="highlight">1.0</td>
+                                <td>Hidden to output weight</td>
+                            </tr>
+                            <tr>
+                                <td><code>b_h</code></td>
+                                <td class="highlight">0.1</td>
+                                <td>Hidden bias</td>
+                            </tr>
+                            <tr>
+                                <td><code>b_y</code></td>
+                                <td class="highlight">0.0</td>
+                                <td>Output bias</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="calc-section">
+                    <div class="section-title">Step 1: Timestep t=0</div>
+                    
+                    <div class="step">
+                        <div class="step-title">
+                            <span class="step-number">1</span>
+                            Initialize Hidden State
+                        </div>
+                        
+                        <div class="calculation">
+                            h_{-1} = 0.0 (initial hidden state)
+                        </div>
+                        
+                        <div class="result">
+                            ✓ h_{-1} = 0.0
+                        </div>
+                    </div>
+                    
+                    <div class="step">
+                        <div class="step-title">
+                            <span class="step-number">2</span>
+                            Compute Hidden State at t=0
+                        </div>
+                        
+                        <div class="formula">
+                            <strong>RNN Formula:</strong><br>
+                            h_t = tanh(W_xh × x_t + W_hh × h_{t-1} + b_h)
+                        </div>
+                        
+                        <div class="calculation">
+                            <strong>Substituting values:</strong><br><br>
+                            
+                            x_0 = 0.5<br>
+                            h_{-1} = 0.0<br><br>
+                            
+                            h_0 = tanh(W_xh × x_0 + W_hh × h_{-1} + b_h)<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;= tanh(0.5 × 0.5 + 0.8 × 0.0 + 0.1)<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;= tanh(0.25 + 0.0 + 0.1)<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;= tanh(0.35)<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;≈ 0.336
+                        </div>
+                        
+                        <div class="result">
+                            ✓ h_0 = 0.336
+                        </div>
+                        
+                        <div class="note">
+                            <strong>tanh function:</strong> Maps values to range [-1, 1]<br>
+                            tanh(x) = (e^x - e^{-x}) / (e^x + e^{-x})
+                        </div>
+                    </div>
+                    
+                    <div class="step">
+                        <div class="step-title">
+                            <span class="step-number">3</span>
+                            Compute Output at t=0
+                        </div>
+                        
+                        <div class="formula">
+                            <strong>Output Formula:</strong><br>
+                            y_t = W_hy × h_t + b_y
+                        </div>
+                        
+                        <div class="calculation">
+                            y_0 = W_hy × h_0 + b_y<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;= 1.0 × 0.336 + 0.0<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;= 0.336
+                        </div>
+                        
+                        <div class="result">
+                            ✓ y_0 = 0.336
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="calc-section">
+                    <div class="section-title">Step 2: Timestep t=1</div>
+                    
+                    <div class="step">
+                        <div class="step-title">
+                            <span class="step-number">4</span>
+                            Compute Hidden State at t=1
+                        </div>
+                        
+                        <div class="note">
+                            Now we use the previous hidden state h_0 = 0.336 (this is the "recurrent" part!)
+                        </div>
+                        
+                        <div class="calculation">
+                            <strong>Substituting values:</strong><br><br>
+                            
+                            x_1 = 0.8<br>
+                            h_0 = 0.336<br><br>
+                            
+                            h_1 = tanh(W_xh × x_1 + W_hh × h_0 + b_h)<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;= tanh(0.5 × 0.8 + 0.8 × 0.336 + 0.1)<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;= tanh(0.4 + 0.269 + 0.1)<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;= tanh(0.769)<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;≈ 0.646
+                        </div>
+                        
+                        <div class="result">
+                            ✓ h_1 = 0.646
+                        </div>
+                    </div>
+                    
+                    <div class="step">
+                        <div class="step-title">
+                            <span class="step-number">5</span>
+                            Compute Output at t=1
+                        </div>
+                        
+                        <div class="calculation">
+                            y_1 = W_hy × h_1 + b_y<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;= 1.0 × 0.646 + 0.0<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;= 0.646
+                        </div>
+                        
+                        <div class="result">
+                            ✓ y_1 = 0.646
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="calc-section">
+                    <div class="section-title">Step 3: Timestep t=2</div>
+                    
+                    <div class="step">
+                        <div class="step-title">
+                            <span class="step-number">6</span>
+                            Compute Hidden State at t=2
+                        </div>
+                        
+                        <div class="calculation">
+                            <strong>Substituting values:</strong><br><br>
+                            
+                            x_2 = 0.3<br>
+                            h_1 = 0.646<br><br>
+                            
+                            h_2 = tanh(W_xh × x_2 + W_hh × h_1 + b_h)<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;= tanh(0.5 × 0.3 + 0.8 × 0.646 + 0.1)<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;= tanh(0.15 + 0.517 + 0.1)<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;= tanh(0.767)<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;≈ 0.645
+                        </div>
+                        
+                        <div class="result">
+                            ✓ h_2 = 0.645
+                        </div>
+                    </div>
+                    
+                    <div class="step">
+                        <div class="step-title">
+                            <span class="step-number">7</span>
+                            Compute Output at t=2
+                        </div>
+                        
+                        <div class="calculation">
+                            y_2 = W_hy × h_2 + b_y<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;= 1.0 × 0.645 + 0.0<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;= 0.645
+                        </div>
+                        
+                        <div class="result">
+                            ✓ y_2 = 0.645
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="calc-section">
+                    <div class="section-title">Summary: RNN Forward Pass</div>
+                    
+                    <div class="data-input">
+                        <div class="input-label">Complete RNN Outputs:</div>
+                        <table>
+                            <tr>
+                                <th>Timestep</th>
+                                <th>Input (x_t)</th>
+                                <th>Hidden State (h_t)</th>
+                                <th>Output (y_t)</th>
+                            </tr>
+                            <tr>
+                                <td>t=0</td>
+                                <td class="highlight">0.500</td>
+                                <td class="highlight">0.336</td>
+                                <td class="highlight">0.336</td>
+                            </tr>
+                            <tr>
+                                <td>t=1</td>
+                                <td class="highlight">0.800</td>
+                                <td class="highlight">0.646</td>
+                                <td class="highlight">0.646</td>
+                            </tr>
+                            <tr>
+                                <td>t=2</td>
+                                <td class="highlight">0.300</td>
+                                <td class="highlight">0.645</td>
+                                <td class="highlight">0.645</td>
+                            </tr>
+                        </table>
+                    </div>
+                    
+                    <div class="note">
+                        <strong>Key Insight:</strong> Each hidden state depends on the current input AND the previous hidden state.<br>
+                        This allows RNN to maintain "memory" of previous inputs in the sequence.
+                    </div>
+                </div>
+            </div>
+            
+            <!-- LSTM TAB -->
+            <div id="lstm" class="tab-content">
+                <div class="calc-section">
+                    <div class="section-title">📊 Input Data: Same Sequence as RNN</div>
+                    
+                    <div class="data-input">
+                        <div class="input-label">Input Sequence (2 timesteps for simplicity):</div>
+                        <table style="width: auto; margin: 10px auto;">
+                            <tr>
+                                <th>Time t=0</th>
+                                <th>Time t=1</th>
+                            </tr>
+                            <tr>
+                                <td class="highlight">0.5</td>
+                                <td class="highlight">0.8</td>
+                            </tr>
+                        </table>
+                    </div>
+                    
+                    <div class="data-input">
+                        <div class="input-label">LSTM Parameters (Simplified):</div>
+                        <table>
+                            <tr>
+                                <th>Gate</th>
+                                <th>Weight (W)</th>
+                                <th>Bias (b)</th>
+                            </tr>
+                            <tr>
+                                <td>Forget Gate</td>
+                                <td class="highlight">W_f = 0.7</td>
+                                <td class="highlight">b_f = 0.0</td>
+                            </tr>
+                            <tr>
+                                <td>Input Gate</td>
+                                <td class="highlight">W_i = 0.6</td>
+                                <td class="highlight">b_i = 0.0</td>
+                            </tr>
+                            <tr>
+                                <td>Cell Candidate</td>
+                                <td class="highlight">W_c = 0.5</td>
+                                <td class="highlight">b_c = 0.0</td>
+                            </tr>
+                            <tr>
+                                <td>Output Gate</td>
+                                <td class="highlight">W_o = 0.8</td>
+                                <td class="highlight">b_o = 0.0</td>
+                            </tr>
+                        </table>
+                        
+                        <div class="note" style="margin-top: 15px;">
+                            Note: Real LSTM weights are matrices. Here we use scalars for clarity.
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="calc-section">
+                    <div class="section-title">Step 1: Timestep t=0</div>
+                    
+                    <div class="step">
+                        <div class="step-title">
+                            <span class="step-number">1</span>
+                            Initialize States
+                        </div>
+                        
+                        <div class="calculation">
+                            h_{-1} = 0.0 (initial hidden state)<br>
+                            C_{-1} = 0.0 (initial cell state)
+                        </div>
+                        
+                        <div class="result">
+                            ✓ h_{-1} = 0.0, C_{-1} = 0.0
+                        </div>
+                    </div>
+                    
+                    <div class="step">
+                        <div class="step-title">
+                            <span class="step-number">2</span>
+                            Compute Forget Gate
+                        </div>
+                        
+                        <div class="formula">
+                            <strong>Forget Gate Formula:</strong><br>
+                            f_t = σ(W_f × [h_{t-1}, x_t] + b_f)
+                        </div>
+                        
+                        <div class="note">
+                            σ is sigmoid function: σ(x) = 1 / (1 + e^{-x}), outputs values in [0, 1]
+                        </div>
+                        
+                        <div class="calculation">
+                            <strong>Simplified (treating [h_{t-1}, x_t] as sum):</strong><br><br>
+                            
+                            f_0 = σ(W_f × (h_{-1} + x_0) + b_f)<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;= σ(0.7 × (0.0 + 0.5) + 0.0)<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;= σ(0.35)<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;= 1 / (1 + e^{-0.35})<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;≈ 0.587
+                        </div>
+                        
+                        <div class="result">
+                            ✓ f_0 = 0.587 (keep ~59% of previous cell state)
+                        </div>
+                    </div>
+                    
+                    <div class="step">
+                        <div class="step-title">
+                            <span class="step-number">3</span>
+                            Compute Input Gate
+                        </div>
+                        
+                        <div class="formula">
+                            <strong>Input Gate Formula:</strong><br>
+                            i_t = σ(W_i × [h_{t-1}, x_t] + b_i)
+                        </div>
+                        
+                        <div class="calculation">
+                            i_0 = σ(W_i × (h_{-1} + x_0) + b_i)<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;= σ(0.6 × (0.0 + 0.5) + 0.0)<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;= σ(0.30)<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;≈ 0.574
+                        </div>
+                        
+                        <div class="result">
+                            ✓ i_0 = 0.574 (accept ~57% of new information)
+                        </div>
+                    </div>
+                    
+                    <div class="step">
+                        <div class="step-title">
+                            <span class="step-number">4</span>
+                            Compute Cell Candidate
+                        </div>
+                        
+                        <div class="formula">
+                            <strong>Cell Candidate Formula:</strong><br>
+                            C̃_t = tanh(W_c × [h_{t-1}, x_t] + b_c)
+                        </div>
+                        
+                        <div class="calculation">
+                            C̃_0 = tanh(W_c × (h_{-1} + x_0) + b_c)<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;= tanh(0.5 × (0.0 + 0.5) + 0.0)<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;= tanh(0.25)<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;≈ 0.245
+                        </div>
+                        
+                        <div class="result">
+                            ✓ C̃_0 = 0.245 (candidate value to add)
+                        </div>
+                    </div>
+                    
+                    <div class="step">
+                        <div class="step-title">
+                            <span class="step-number">5</span>
+                            Update Cell State
+                        </div>
+                        
+                        <div class="formula">
+                            <strong>Cell State Update Formula:</strong><br>
+                            C_t = f_t ⊙ C_{t-1} + i_t ⊙ C̃_t
+                        </div>
+                        
+                        <div class="note">
+                            ⊙ means element-wise multiplication
+                        </div>
+                        
+                        <div class="calculation">
+                            C_0 = f_0 × C_{-1} + i_0 × C̃_0<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;= 0.587 × 0.0 + 0.574 × 0.245<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;= 0.0 + 0.141<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;= 0.141
+                        </div>
+                        
+                        <div class="result">
+                            ✓ C_0 = 0.141 (new cell state / long-term memory)
+                        </div>
+                    </div>
+                    
+                    <div class="step">
+                        <div class="step-title">
+                            <span class="step-number">6</span>
+                            Compute Output Gate
+                        </div>
+                        
+                        <div class="formula">
+                            <strong>Output Gate Formula:</strong><br>
+                            o_t = σ(W_o × [h_{t-1}, x_t] + b_o)
+                        </div>
+                        
+                        <div class="calculation">
+                            o_0 = σ(W_o × (h_{-1} + x_0) + b_o)<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;= σ(0.8 × (0.0 + 0.5) + 0.0)<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;= σ(0.40)<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;≈ 0.599
+                        </div>
+                        
+                        <div class="result">
+                            ✓ o_0 = 0.599 (output ~60% of cell state)
+                        </div>
+                    </div>
+                    
+                    <div class="step">
+                        <div class="step-title">
+                            <span class="step-number">7</span>
+                            Compute Hidden State
+                        </div>
+                        
+                        <div class="formula">
+                            <strong>Hidden State Formula:</strong><br>
+                            h_t = o_t ⊙ tanh(C_t)
+                        </div>
+                        
+                        <div class="calculation">
+                            h_0 = o_0 × tanh(C_0)<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;= 0.599 × tanh(0.141)<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;= 0.599 × 0.140<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;≈ 0.084
+                        </div>
+                        
+                        <div class="result">
+                            ✓ h_0 = 0.084 (hidden state / short-term output)
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="calc-section">
+                    <div class="section-title">Step 2: Timestep t=1</div>
+                    
+                    <div class="step">
+                        <div class="step-title">
+                            <span class="step-number">8</span>
+                            Compute All Gates for t=1
+                        </div>
+                        
+                        <div class="note">
+                            Now we use h_0 = 0.084 and C_0 = 0.141 from previous timestep
+                        </div>
+                        
+                        <div class="calculation">
+                            <strong>Forget Gate:</strong><br>
+                            f_1 = σ(0.7 × (0.084 + 0.8))<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;= σ(0.619) ≈ 0.650<br><br>
+                            
+                            <strong>Input Gate:</strong><br>
+                            i_1 = σ(0.6 × (0.084 + 0.8))<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;= σ(0.530) ≈ 0.629<br><br>
+                            
+                            <strong>Cell Candidate:</strong><br>
+                            C̃_1 = tanh(0.5 × (0.084 + 0.8))<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;= tanh(0.442) ≈ 0.415<br><br>
+                            
+                            <strong>Cell State Update:</strong><br>
+                            C_1 = f_1 × C_0 + i_1 × C̃_1<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;= 0.650 × 0.141 + 0.629 × 0.415<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;= 0.092 + 0.261<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;= 0.353<br><br>
+                            
+                            <strong>Output Gate:</strong><br>
+                            o_1 = σ(0.8 × (0.084 + 0.8))<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;= σ(0.707) ≈ 0.670<br><br>
+                            
+                            <strong>Hidden State:</strong><br>
+                            h_1 = o_1 × tanh(C_1)<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;= 0.670 × tanh(0.353)<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;= 0.670 × 0.339<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;≈ 0.227
+                        </div>
+                        
+                        <div class="result">
+                            ✓ h_1 = 0.227, C_1 = 0.353
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="calc-section">
+                    <div class="section-title">Summary: LSTM Forward Pass</div>
+                    
+                    <div class="data-input">
+                        <div class="input-label">Complete LSTM States:</div>
+                        <table>
+                            <tr>
+                                <th>Time</th>
+                                <th>Input</th>
+                                <th>Forget</th>
+                                <th>Input</th>
+                                <th>Output</th>
+                                <th>Cell (C_t)</th>
+                                <th>Hidden (h_t)</th>
+                            </tr>
+                            <tr>
+                                <td>t=0</td>
+                                <td class="highlight">0.500</td>
+                                <td class="highlight">0.587</td>
+                                <td class="highlight">0.574</td>
+                                <td class="highlight">0.599</td>
+                                <td class="highlight">0.141</td>
+                                <td class="highlight">0.084</td>
+                            </tr>
+                            <tr>
+                                <td>t=1</td>
+                                <td class="highlight">0.800</td>
+                                <td class="highlight">0.650</td>
+                                <td class="highlight">0.629</td>
+                                <td class="highlight">0.670</td>
+                                <td class="highlight">0.353</td>
+                                <td class="highlight">0.227</td>
+                            </tr>
+                        </table>
+                    </div>
+                    
+                    <div class="note">
+                        <strong>Key Differences from RNN:</strong><br><br>
+                        
+                        1. <strong>Gated Control:</strong> LSTM uses 3 gates (forget, input, output) to control information flow<br>
+                        2. <strong>Cell State:</strong> Separate "memory highway" (C_t) that flows with minimal transformation<br>
+                        3. <strong>Selective Memory:</strong> Can selectively remember or forget information at each timestep<br>
+                        4. <strong>Long-term Dependencies:</strong> Cell state allows gradient to flow better through time<br><br>
+                        
+                        <strong>Gate Interpretations for t=1:</strong><br>
+                        • Forget Gate (0.650): Keep 65% of previous cell state<br>
+                        • Input Gate (0.629): Accept 63% of new candidate information<br>
+                        • Output Gate (0.670): Output 67% of cell state to hidden state
+                    </div>
+                </div>
+                
+                <div class="calc-section">
+                    <div class="section-title">Comparison: RNN vs LSTM</div>
+                    
+                    <table class="comparison-table">
+                        <tr>
+                            <th>Aspect</th>
+                            <th>RNN</th>
+                            <th>LSTM</th>
+                        </tr>
+                        <tr>
+                            <td><strong>Hidden State</strong></td>
+                            <td>Single state vector</td>
+                            <td>Two states: hidden (h_t) and cell (C_t)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Gates</strong></td>
+                            <td>None</td>
+                            <td>4 gates (forget, input, cell, output)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Parameters</strong></td>
+                            <td>3 weight matrices</td>
+                            <td>8 weight matrices (4 gates × 2 weights each)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Memory</strong></td>
+                            <td>Short-term only</td>
+                            <td>Short-term (h_t) + Long-term (C_t)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Gradient Flow</strong></td>
+                            <td>Vanishes quickly</td>
+                            <td>Better flow through cell state</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Sequence Length</strong></td>
+                            <td>Struggles beyond ~10 steps</td>
+                            <td>Can handle 100+ steps</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Computation</strong></td>
+                            <td>Faster (fewer operations)</td>
+                            <td>Slower (4× more operations)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Use Cases</strong></td>
+                            <td>Simple sequences, real-time</td>
+                            <td>Complex patterns, long sequences</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showTab(tabName) {
+            // Hide all tab contents
+            const contents = document.querySelectorAll('.tab-content');
+            contents.forEach(content => content.classList.remove('active'));
+            
+            // Remove active class from all tabs
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            // Show selected tab content
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+        }
+    </script>
+</body>
+</html>

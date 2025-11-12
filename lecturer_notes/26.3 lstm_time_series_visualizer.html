@@ -1,0 +1,1387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LSTM Time Series Visualizer - Long Short-Term Memory Network</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 2200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.95;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            padding: 10px 20px;
+            border-radius: 20px;
+            margin-top: 15px;
+            font-size: 0.9em;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            gap: 20px;
+            padding: 30px;
+        }
+        
+        .left-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .panel-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .card-title {
+            font-size: 1.2em;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .canvas-container {
+            background: white;
+            border: 3px solid #667eea;
+            border-radius: 12px;
+            padding: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .time-series-canvas {
+            width: 100%;
+            height: 200px;
+            display: block;
+            cursor: crosshair;
+            border-radius: 8px;
+        }
+        
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn-warning {
+            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+            color: white;
+        }
+        
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+            color: white;
+        }
+        
+        .stat-label {
+            font-size: 0.8em;
+            opacity: 0.9;
+            margin-bottom: 5px;
+        }
+        
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: 700;
+        }
+        
+        .progress-container {
+            margin-top: 15px;
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 25px;
+            background: #e9ecef;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 0.85em;
+        }
+        
+        .pattern-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .pattern-btn {
+            padding: 10px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+            color: #495057;
+        }
+        
+        .pattern-btn.active {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .pattern-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .visualization-area {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            min-height: 800px;
+        }
+        
+        .viz-section {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .viz-title {
+            font-size: 1.3em;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .chart-canvas {
+            width: 100%;
+            height: 300px;
+            display: block;
+        }
+        
+        .lstm-diagram {
+            padding: 30px;
+            background: linear-gradient(to right, #f8f9fa, #e9ecef, #f8f9fa);
+            border-radius: 12px;
+            overflow-x: auto;
+        }
+        
+        .lstm-cell-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 40px;
+            margin-bottom: 30px;
+        }
+        
+        .lstm-cell {
+            background: white;
+            border: 4px solid #667eea;
+            border-radius: 20px;
+            padding: 30px;
+            min-width: 600px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+        }
+        
+        .cell-title {
+            text-align: center;
+            font-size: 1.3em;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        
+        .gates-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .gate-box {
+            background: linear-gradient(145deg, #f8f9fa, #e9ecef);
+            border: 3px solid #dee2e6;
+            border-radius: 12px;
+            padding: 15px;
+            transition: all 0.3s;
+        }
+        
+        .gate-box.active {
+            border-color: #667eea;
+            background: linear-gradient(145deg, #e3f2fd, #bbdefb);
+            transform: scale(1.05);
+        }
+        
+        .gate-name {
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: #2c3e50;
+            font-size: 1.1em;
+        }
+        
+        .gate-value {
+            font-size: 1.8em;
+            font-weight: 700;
+            color: #667eea;
+            margin: 8px 0;
+        }
+        
+        .gate-description {
+            font-size: 0.85em;
+            color: #6c757d;
+            line-height: 1.4;
+        }
+        
+        .forget-gate { border-color: #e74c3c; }
+        .forget-gate .gate-value { color: #e74c3c; }
+        .forget-gate.active { border-color: #e74c3c; background: linear-gradient(145deg, #fadbd8, #f8b4b4); }
+        
+        .input-gate { border-color: #3498db; }
+        .input-gate .gate-value { color: #3498db; }
+        .input-gate.active { border-color: #3498db; background: linear-gradient(145deg, #d6eaf8, #aed6f1); }
+        
+        .cell-gate { border-color: #9b59b6; }
+        .cell-gate .gate-value { color: #9b59b6; }
+        .cell-gate.active { border-color: #9b59b6; background: linear-gradient(145deg, #ebdef0, #d7bde2); }
+        
+        .output-gate { border-color: #2ecc71; }
+        .output-gate .gate-value { color: #2ecc71; }
+        .output-gate.active { border-color: #2ecc71; background: linear-gradient(145deg, #d5f4e6, #a9dfbf); }
+        
+        .cell-state-container {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            padding: 20px;
+            color: white;
+            text-align: center;
+        }
+        
+        .cell-state-label {
+            font-weight: 700;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+        
+        .cell-state-value {
+            font-size: 2em;
+            font-weight: 700;
+        }
+        
+        .flow-arrow {
+            font-size: 3em;
+            color: #667eea;
+        }
+        
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 0.9em;
+            color: #1565c0;
+        }
+        
+        .sequence-display {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        
+        .sequence-item {
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            padding: 10px 15px;
+            font-weight: 700;
+            color: #667eea;
+            min-width: 60px;
+            text-align: center;
+        }
+        
+        .sequence-item.prediction {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: #764ba2;
+        }
+        
+        .prediction-display {
+            background: linear-gradient(145deg, #ffffff, #f8f9fa);
+            border: 3px solid #667eea;
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+        }
+        
+        .prediction-label {
+            font-size: 1em;
+            color: #6c757d;
+            margin-bottom: 10px;
+        }
+        
+        .prediction-value {
+            font-size: 3em;
+            font-weight: 700;
+            color: #667eea;
+            margin: 15px 0;
+        }
+        
+        .slider-container {
+            margin: 15px 0;
+        }
+        
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #495057;
+            font-size: 0.9em;
+        }
+        
+        .slider {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: #dee2e6;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+        }
+        
+        .slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            border: none;
+        }
+        
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+        
+        .loading-content {
+            background: white;
+            padding: 50px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 500px;
+        }
+        
+        .loading-spinner {
+            width: 80px;
+            height: 80px;
+            border: 8px solid #e9ecef;
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .loading-title {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .loading-text {
+            color: #6c757d;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .architecture-info {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .architecture-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .architecture-row:last-child {
+            border-bottom: none;
+        }
+        
+        .architecture-label {
+            font-weight: 600;
+            color: #495057;
+        }
+        
+        .architecture-value {
+            color: #667eea;
+            font-weight: 700;
+        }
+        
+        @media (max-width: 1400px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="loading" class="loading-overlay">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <div class="loading-title">Initializing LSTM</div>
+            <div class="loading-text">
+                Building Long Short-Term Memory Network<br>
+                Creating forget, input, cell & output gates<br>
+                Training on sequential patterns...
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1>🧠 LSTM Time Series Visualizer</h1>
+            <p>Long Short-Term Memory Network with Gate Mechanism Visualization</p>
+            <div id="statusBadge" class="status-badge hidden"></div>
+        </div>
+        
+        <div class="main-content">
+            <div class="left-panel">
+                <div class="panel-card">
+                    <div class="card-title">📈 Create Time Series</div>
+                    
+                    <div class="pattern-selector">
+                        <button class="pattern-btn active" onclick="app.selectPattern('sine')">
+                            🌊 Sine Wave
+                        </button>
+                        <button class="pattern-btn" onclick="app.selectPattern('linear')">
+                            📊 Linear
+                        </button>
+                        <button class="pattern-btn" onclick="app.selectPattern('complex')">
+                            🔄 Complex
+                        </button>
+                        <button class="pattern-btn" onclick="app.selectPattern('seasonal')">
+                            📅 Seasonal
+                        </button>
+                    </div>
+                    
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>Noise Level</span>
+                            <span id="noiseValue">0.1</span>
+                        </div>
+                        <input type="range" class="slider" id="noiseSlider" min="0" max="0.5" step="0.05" value="0.1" 
+                               oninput="app.updateNoise(this.value)">
+                    </div>
+                    
+                    <div class="canvas-container">
+                        <canvas id="timeSeriesCanvas" class="time-series-canvas"></canvas>
+                    </div>
+                    
+                    <div class="button-group">
+                        <button class="btn-secondary" onclick="app.generateData()">
+                            🔄 Regenerate
+                        </button>
+                        <button class="btn-primary" onclick="app.predictNext()">
+                            🔮 Predict Next
+                        </button>
+                    </div>
+                    
+                    <div class="info-box">
+                        💡 LSTM uses gates to control information flow, solving the vanishing gradient problem!
+                    </div>
+                </div>
+                
+                <div class="panel-card">
+                    <div class="card-title">➕ Training Data</div>
+                    
+                    <button class="btn-primary" onclick="app.addSequence()" style="width: 100%; margin-bottom: 10px;">
+                        ➕ Add Current Sequence
+                    </button>
+                    
+                    <button class="btn-warning" onclick="app.retrainNetwork()" style="width: 100%;">
+                        🔄 Retrain LSTM
+                    </button>
+                    
+                    <div id="addedSequencesInfo" class="info-box" style="margin-top: 10px; display: none;">
+                        <strong id="addedCount">0</strong> new sequences added
+                    </div>
+                </div>
+                
+                <div class="panel-card">
+                    <div class="card-title">📊 LSTM Stats</div>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-label">Epochs</div>
+                            <div class="stat-value" id="epochValue">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Loss</div>
+                            <div class="stat-value" id="lossValue">-</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Sequences</div>
+                            <div class="stat-value" id="sequencesValue">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Gates</div>
+                            <div class="stat-value">4</div>
+                        </div>
+                    </div>
+                    
+                    <div id="progressContainer" class="progress-container hidden">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: 600; color: #2c3e50; font-size: 0.9em;">
+                            <span>Training Progress</span>
+                            <span id="progressPercent">0%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressFill" style="width: 0%">
+                                <span id="progressText">Epoch 0/100</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="visualization-area">
+                <div class="viz-section">
+                    <div class="viz-title">🏗️ LSTM Architecture</div>
+                    
+                    <div class="architecture-info">
+                        <div class="architecture-row">
+                            <span class="architecture-label">Input Dimension</span>
+                            <span class="architecture-value">1 (single value per timestep)</span>
+                        </div>
+                        <div class="architecture-row">
+                            <span class="architecture-label">Hidden Units</span>
+                            <span class="architecture-value">16 LSTM cells</span>
+                        </div>
+                        <div class="architecture-row">
+                            <span class="architecture-label">Output Dimension</span>
+                            <span class="architecture-value">1 (next value prediction)</span>
+                        </div>
+                        <div class="architecture-row">
+                            <span class="architecture-label">Sequence Length</span>
+                            <span class="architecture-value">10 timesteps</span>
+                        </div>
+                    </div>
+                    
+                    <div class="lstm-diagram">
+                        <div class="lstm-cell-container">
+                            <div class="lstm-cell" id="lstmCell">
+                                <div class="cell-title">LSTM Cell - Gate Mechanisms</div>
+                                
+                                <div class="gates-container">
+                                    <div class="gate-box forget-gate" id="forgetGate">
+                                        <div class="gate-name">🚫 Forget Gate</div>
+                                        <div class="gate-value" id="forgetValue">0.50</div>
+                                        <div class="gate-description">Decides what to forget from cell state (0 = forget all, 1 = keep all)</div>
+                                    </div>
+                                    
+                                    <div class="gate-box input-gate" id="inputGate">
+                                        <div class="gate-name">📥 Input Gate</div>
+                                        <div class="gate-value" id="inputValue">0.50</div>
+                                        <div class="gate-description">Decides what new information to add to cell state</div>
+                                    </div>
+                                    
+                                    <div class="gate-box cell-gate" id="cellGate">
+                                        <div class="gate-name">📝 Cell Update</div>
+                                        <div class="gate-value" id="cellUpdateValue">0.00</div>
+                                        <div class="gate-description">Candidate values to add to cell state</div>
+                                    </div>
+                                    
+                                    <div class="gate-box output-gate" id="outputGate">
+                                        <div class="gate-name">📤 Output Gate</div>
+                                        <div class="gate-value" id="outputValue">0.50</div>
+                                        <div class="gate-description">Decides what parts of cell state to output</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="cell-state-container">
+                                    <div class="cell-state-label">💾 Cell State (Long-term Memory)</div>
+                                    <div class="cell-state-value" id="cellStateValue">0.000</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div style="text-align: center; color: #6c757d; font-size: 0.95em; margin-top: 20px;">
+                            <strong>Information Flow:</strong> Input → Gates Control → Cell State Update → Output<br>
+                            <em>Cell state acts as a "conveyor belt" carrying information across timesteps</em>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="viz-section">
+                    <div class="viz-title">📊 Prediction Visualization</div>
+                    <canvas id="predictionChart" class="chart-canvas"></canvas>
+                </div>
+                
+                <div id="predictionResult" class="viz-section hidden">
+                    <div class="viz-title">🎯 Prediction Result</div>
+                    <div class="prediction-display">
+                        <div class="prediction-label">Next Value Prediction</div>
+                        <div class="prediction-value" id="predictedValue">-</div>
+                        <div style="font-size: 1.1em; color: #495057; margin-top: 10px;">
+                            <strong>Confidence:</strong> <span id="confidenceValue">-</span>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 20px;">
+                        <div style="font-weight: 700; margin-bottom: 10px; color: #2c3e50;">Input Sequence:</div>
+                        <div class="sequence-display" id="inputSequence"></div>
+                    </div>
+                    
+                    <div style="margin-top: 15px;">
+                        <div style="font-weight: 700; margin-bottom: 10px; color: #2c3e50;">LSTM Prediction:</div>
+                        <div class="sequence-display">
+                            <div class="sequence-item prediction" id="predictionSequence">-</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="viz-section">
+                    <div class="viz-title">📈 Training Loss History</div>
+                    <canvas id="lossChart" class="chart-canvas"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Utility functions
+        function tanh(x) {
+            const e2x = Math.exp(2 * x);
+            return (e2x - 1) / (e2x + 1);
+        }
+        
+        function sigmoid(x) {
+            return 1 / (1 + Math.exp(-Math.max(Math.min(x, 500), -500)));
+        }
+        
+        // LSTM implementation
+        class SimpleLSTM {
+            constructor(inputSize, hiddenSize, outputSize) {
+                this.inputSize = inputSize;
+                this.hiddenSize = hiddenSize;
+                this.outputSize = outputSize;
+                
+                this.initWeights();
+            }
+            
+            initWeights() {
+                const scale = 0.1;
+                
+                // Forget gate weights
+                this.Wf = this.randomMatrix(this.inputSize + this.hiddenSize, this.hiddenSize, scale);
+                this.bf = new Array(this.hiddenSize).fill(0);
+                
+                // Input gate weights
+                this.Wi = this.randomMatrix(this.inputSize + this.hiddenSize, this.hiddenSize, scale);
+                this.bi = new Array(this.hiddenSize).fill(0);
+                
+                // Cell candidate weights
+                this.Wc = this.randomMatrix(this.inputSize + this.hiddenSize, this.hiddenSize, scale);
+                this.bc = new Array(this.hiddenSize).fill(0);
+                
+                // Output gate weights
+                this.Wo = this.randomMatrix(this.inputSize + this.hiddenSize, this.hiddenSize, scale);
+                this.bo = new Array(this.hiddenSize).fill(0);
+                
+                // Output projection weights
+                this.Wy = this.randomMatrix(this.hiddenSize, this.outputSize, scale);
+                this.by = new Array(this.outputSize).fill(0);
+                
+                // States
+                this.h = new Array(this.hiddenSize).fill(0);
+                this.c = new Array(this.hiddenSize).fill(0);
+                
+                // For visualization
+                this.gateValues = {
+                    forget: 0.5,
+                    input: 0.5,
+                    cell: 0,
+                    output: 0.5
+                };
+            }
+            
+            randomMatrix(rows, cols, scale) {
+                const matrix = [];
+                for (let i = 0; i < rows; i++) {
+                    matrix[i] = [];
+                    for (let j = 0; j < cols; j++) {
+                        matrix[i][j] = (Math.random() * 2 - 1) * scale;
+                    }
+                }
+                return matrix;
+            }
+            
+            matMul(W, x) {
+                const result = new Array(W[0].length).fill(0);
+                for (let i = 0; i < W[0].length; i++) {
+                    for (let j = 0; j < x.length; j++) {
+                        result[i] += W[j][i] * x[j];
+                    }
+                }
+                return result;
+            }
+            
+            forward(sequence) {
+                // Reset states
+                this.h = new Array(this.hiddenSize).fill(0);
+                this.c = new Array(this.hiddenSize).fill(0);
+                
+                let outputs = [];
+                
+                for (let t = 0; t < sequence.length; t++) {
+                    const x = [sequence[t]];
+                    
+                    // Concatenate input and hidden state
+                    const concat = [...x, ...this.h];
+                    
+                    // Forget gate: f_t = sigmoid(Wf * [x_t, h_{t-1}] + bf)
+                    const f = this.matMul(this.Wf, concat).map((val, i) => sigmoid(val + this.bf[i]));
+                    
+                    // Input gate: i_t = sigmoid(Wi * [x_t, h_{t-1}] + bi)
+                    const i = this.matMul(this.Wi, concat).map((val, idx) => sigmoid(val + this.bi[idx]));
+                    
+                    // Cell candidate: c_tilde = tanh(Wc * [x_t, h_{t-1}] + bc)
+                    const c_tilde = this.matMul(this.Wc, concat).map((val, idx) => tanh(val + this.bc[idx]));
+                    
+                    // Update cell state: c_t = f_t * c_{t-1} + i_t * c_tilde
+                    this.c = this.c.map((val, idx) => f[idx] * val + i[idx] * c_tilde[idx]);
+                    
+                    // Output gate: o_t = sigmoid(Wo * [x_t, h_{t-1}] + bo)
+                    const o = this.matMul(this.Wo, concat).map((val, idx) => sigmoid(val + this.bo[idx]));
+                    
+                    // Hidden state: h_t = o_t * tanh(c_t)
+                    this.h = this.c.map((val, idx) => o[idx] * tanh(val));
+                    
+                    // Store gate values for visualization (average across hidden units)
+                    this.gateValues.forget = f.reduce((a, b) => a + b, 0) / f.length;
+                    this.gateValues.input = i.reduce((a, b) => a + b, 0) / i.length;
+                    this.gateValues.cell = c_tilde.reduce((a, b) => a + b, 0) / c_tilde.length;
+                    this.gateValues.output = o.reduce((a, b) => a + b, 0) / o.length;
+                    
+                    // Output: y_t = Wy * h_t + by
+                    const y = this.matMul(this.Wy, this.h).map((val, idx) => val + this.by[idx]);
+                    outputs.push(y[0]);
+                }
+                
+                return outputs;
+            }
+            
+            predict(sequence) {
+                const outputs = this.forward(sequence);
+                return outputs[outputs.length - 1];
+            }
+            
+            train(sequences, epochs, learningRate = 0.001) {
+                const losses = [];
+                
+                for (let e = 0; e < epochs; e++) {
+                    let totalLoss = 0;
+                    
+                    for (const seq of sequences) {
+                        const input = seq.slice(0, -1);
+                        const target = seq[seq.length - 1];
+                        
+                        const prediction = this.predict(input);
+                        const error = prediction - target;
+                        totalLoss += error * error;
+                        
+                        // Simplified weight update (in practice would use BPTT)
+                        const gradient = 2 * error * learningRate;
+                        
+                        for (let i = 0; i < this.hiddenSize; i++) {
+                            this.Wy[i][0] -= gradient * this.h[i];
+                        }
+                    }
+                    
+                    const avgLoss = totalLoss / sequences.length;
+                    losses.push(avgLoss);
+                }
+                
+                return losses;
+            }
+        }
+        
+        // Pattern generators
+        const Patterns = {
+            sine: (t, noise) => Math.sin(t * 0.5) + (Math.random() - 0.5) * noise,
+            linear: (t, noise) => t * 0.1 + (Math.random() - 0.5) * noise,
+            complex: (t, noise) => Math.sin(t * 0.3) * Math.cos(t * 0.1) * 2 + (Math.random() - 0.5) * noise,
+            seasonal: (t, noise) => Math.sin(t * 0.2) + 0.5 * Math.sin(t * 0.7) + (Math.random() - 0.5) * noise
+        };
+        
+        // Main App
+        class LSTMApp {
+            constructor() {
+                this.lstm = new SimpleLSTM(1, 16, 1);
+                this.sequences = [];
+                this.newSequences = [];
+                this.currentPattern = 'sine';
+                this.noiseLevel = 0.1;
+                this.currentData = [];
+                this.trainingLosses = [];
+                this.sequenceLength = 10;
+                
+                this.init();
+            }
+            
+            async init() {
+                this.setupCanvas();
+                await this.initializeAndTrain();
+            }
+            
+            setupCanvas() {
+                this.canvas = document.getElementById('timeSeriesCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.canvas.width = this.canvas.offsetWidth;
+                this.canvas.height = 200;
+            }
+            
+            async initializeAndTrain() {
+                await this.sleep(500);
+                
+                // Generate training sequences
+                console.log('Generating time series sequences...');
+                const numSequences = 60;
+                
+                for (let i = 0; i < numSequences; i++) {
+                    const pattern = ['sine', 'linear', 'complex', 'seasonal'][i % 4];
+                    const sequence = this.generateSequence(pattern, 0.1);
+                    this.sequences.push(sequence);
+                }
+                
+                document.getElementById('sequencesValue').textContent = this.sequences.length;
+                
+                await this.sleep(300);
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('progressContainer').classList.remove('hidden');
+                
+                // Train LSTM
+                console.log('Training LSTM...');
+                const epochs = 100;
+                
+                for (let e = 0; e < epochs; e++) {
+                    const losses = this.lstm.train(this.sequences, 1, 0.001);
+                    this.trainingLosses.push(losses[0]);
+                    
+                    const loss = losses[0].toFixed(4);
+                    const progress = ((e + 1) / epochs) * 100;
+                    
+                    document.getElementById('epochValue').textContent = e + 1;
+                    document.getElementById('lossValue').textContent = loss;
+                    document.getElementById('progressPercent').textContent = progress.toFixed(0) + '%';
+                    document.getElementById('progressFill').style.width = progress + '%';
+                    document.getElementById('progressText').textContent = `Epoch ${e + 1}/${epochs}`;
+                    
+                    if (e % 5 === 0) {
+                        this.drawLossChart();
+                        await this.sleep(10);
+                    }
+                }
+                
+                document.getElementById('progressContainer').classList.add('hidden');
+                const badge = document.getElementById('statusBadge');
+                badge.textContent = `✅ LSTM Trained • Loss: ${this.trainingLosses[this.trainingLosses.length - 1].toFixed(4)}`;
+                badge.classList.remove('hidden');
+                
+                // Generate initial data
+                this.generateData();
+                this.drawLossChart();
+            }
+            
+            generateSequence(pattern, noise) {
+                const sequence = [];
+                for (let t = 0; t < this.sequenceLength + 1; t++) {
+                    const value = Patterns[pattern](t, noise);
+                    sequence.push(value);
+                }
+                return sequence;
+            }
+            
+            generateData() {
+                this.currentData = this.generateSequence(this.currentPattern, this.noiseLevel);
+                this.drawTimeSeries();
+                this.drawPredictionChart();
+            }
+            
+            drawTimeSeries() {
+                const width = this.canvas.width;
+                const height = this.canvas.height;
+                
+                this.ctx.clearRect(0, 0, width, height);
+                
+                const min = Math.min(...this.currentData);
+                const max = Math.max(...this.currentData);
+                const range = max - min || 1;
+                const padding = 20;
+                
+                // Draw grid
+                this.ctx.strokeStyle = '#e9ecef';
+                this.ctx.lineWidth = 1;
+                for (let i = 0; i <= 5; i++) {
+                    const y = padding + (height - 2 * padding) * i / 5;
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(padding, y);
+                    this.ctx.lineTo(width - padding, y);
+                    this.ctx.stroke();
+                }
+                
+                // Draw line
+                this.ctx.strokeStyle = '#667eea';
+                this.ctx.lineWidth = 3;
+                this.ctx.beginPath();
+                
+                for (let i = 0; i < this.currentData.length; i++) {
+                    const x = padding + (width - 2 * padding) * i / (this.currentData.length - 1);
+                    const y = height - padding - ((this.currentData[i] - min) / range) * (height - 2 * padding);
+                    
+                    if (i === 0) {
+                        this.ctx.moveTo(x, y);
+                    } else {
+                        this.ctx.lineTo(x, y);
+                    }
+                }
+                this.ctx.stroke();
+                
+                // Draw points
+                this.ctx.fillStyle = '#667eea';
+                for (let i = 0; i < this.currentData.length; i++) {
+                    const x = padding + (width - 2 * padding) * i / (this.currentData.length - 1);
+                    const y = height - padding - ((this.currentData[i] - min) / range) * (height - 2 * padding);
+                    
+                    this.ctx.beginPath();
+                    this.ctx.arc(x, y, 4, 0, Math.PI * 2);
+                    this.ctx.fill();
+                }
+            }
+            
+            selectPattern(pattern) {
+                this.currentPattern = pattern;
+                
+                document.querySelectorAll('.pattern-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                event.target.classList.add('active');
+                
+                this.generateData();
+            }
+            
+            updateNoise(value) {
+                this.noiseLevel = parseFloat(value);
+                document.getElementById('noiseValue').textContent = value;
+                this.generateData();
+            }
+            
+            async predictNext() {
+                const input = this.currentData.slice(0, -1);
+                const prediction = this.lstm.predict(input);
+                const actual = this.currentData[this.currentData.length - 1];
+                
+                const error = Math.abs(prediction - actual);
+                const confidence = Math.max(0, 100 - error * 50);
+                
+                // Update UI
+                document.getElementById('predictedValue').textContent = prediction.toFixed(3);
+                document.getElementById('confidenceValue').textContent = confidence.toFixed(1) + '%';
+                document.getElementById('predictionSequence').textContent = prediction.toFixed(3);
+                
+                // Show input sequence
+                const inputSeq = document.getElementById('inputSequence');
+                inputSeq.innerHTML = '';
+                for (const val of input) {
+                    const item = document.createElement('div');
+                    item.className = 'sequence-item';
+                    item.textContent = val.toFixed(2);
+                    inputSeq.appendChild(item);
+                }
+                
+                document.getElementById('predictionResult').classList.remove('hidden');
+                
+                // Update prediction chart
+                this.drawPredictionChart(prediction);
+                
+                // Animate gates
+                await this.animateGates();
+            }
+            
+            async animateGates() {
+                const gates = ['forgetGate', 'inputGate', 'cellGate', 'outputGate'];
+                const values = ['forgetValue', 'inputValue', 'cellUpdateValue', 'outputValue'];
+                const gateKeys = ['forget', 'input', 'cell', 'output'];
+                
+                for (let i = 0; i < gates.length; i++) {
+                    const gate = document.getElementById(gates[i]);
+                    const value = document.getElementById(values[i]);
+                    
+                    gate.classList.add('active');
+                    value.textContent = this.lstm.gateValues[gateKeys[i]].toFixed(2);
+                    
+                    await this.sleep(400);
+                    
+                    gate.classList.remove('active');
+                }
+                
+                // Update cell state
+                const avgCellState = this.lstm.c.reduce((a, b) => a + b, 0) / this.lstm.c.length;
+                document.getElementById('cellStateValue').textContent = avgCellState.toFixed(3);
+            }
+            
+            drawPredictionChart(prediction = null) {
+                const canvas = document.getElementById('predictionChart');
+                const ctx = canvas.getContext('2d');
+                canvas.width = canvas.offsetWidth;
+                canvas.height = 300;
+                
+                const width = canvas.width;
+                const height = canvas.height;
+                const padding = 50;
+                
+                ctx.clearRect(0, 0, width, height);
+                
+                // Draw axes
+                ctx.strokeStyle = '#dee2e6';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(padding, padding);
+                ctx.lineTo(padding, height - padding);
+                ctx.lineTo(width - padding, height - padding);
+                ctx.stroke();
+                
+                // Labels
+                ctx.fillStyle = '#495057';
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('Time Steps', width / 2, height - 10);
+                
+                const allData = prediction !== null ? [...this.currentData, prediction] : this.currentData;
+                const min = Math.min(...allData);
+                const max = Math.max(...allData);
+                const range = max - min || 1;
+                
+                // Draw historical data
+                ctx.strokeStyle = '#667eea';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                
+                for (let i = 0; i < this.currentData.length; i++) {
+                    const x = padding + (width - 2 * padding) * i / (allData.length - 1);
+                    const y = height - padding - ((this.currentData[i] - min) / range) * (height - 2 * padding);
+                    
+                    if (i === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                }
+                ctx.stroke();
+                
+                // Draw points
+                ctx.fillStyle = '#667eea';
+                for (let i = 0; i < this.currentData.length; i++) {
+                    const x = padding + (width - 2 * padding) * i / (allData.length - 1);
+                    const y = height - padding - ((this.currentData[i] - min) / range) * (height - 2 * padding);
+                    
+                    ctx.beginPath();
+                    ctx.arc(x, y, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                
+                // Draw prediction
+                if (prediction !== null) {
+                    const x = padding + (width - 2 * padding) * (allData.length - 1) / (allData.length - 1);
+                    const y = height - padding - ((prediction - min) / range) * (height - 2 * padding);
+                    
+                    const lastX = padding + (width - 2 * padding) * (this.currentData.length - 1) / (allData.length - 1);
+                    const lastY = height - padding - ((this.currentData[this.currentData.length - 1] - min) / range) * (height - 2 * padding);
+                    
+                    ctx.strokeStyle = '#764ba2';
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([5, 5]);
+                    ctx.beginPath();
+                    ctx.moveTo(lastX, lastY);
+                    ctx.lineTo(x, y);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                    
+                    ctx.fillStyle = '#764ba2';
+                    ctx.beginPath();
+                    ctx.arc(x, y, 8, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.fillStyle = '#764ba2';
+                    ctx.font = 'bold 14px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('LSTM Prediction', x, y - 15);
+                }
+            }
+            
+            drawLossChart() {
+                const canvas = document.getElementById('lossChart');
+                const ctx = canvas.getContext('2d');
+                canvas.width = canvas.offsetWidth;
+                canvas.height = 300;
+                
+                const width = canvas.width;
+                const height = canvas.height;
+                const padding = 50;
+                
+                ctx.clearRect(0, 0, width, height);
+                
+                if (this.trainingLosses.length === 0) return;
+                
+                // Draw axes
+                ctx.strokeStyle = '#dee2e6';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(padding, padding);
+                ctx.lineTo(padding, height - padding);
+                ctx.lineTo(width - padding, height - padding);
+                ctx.stroke();
+                
+                // Labels
+                ctx.fillStyle = '#495057';
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('Epochs', width / 2, height - 10);
+                
+                const min = Math.min(...this.trainingLosses);
+                const max = Math.max(...this.trainingLosses);
+                const range = max - min || 1;
+                
+                // Draw line
+                ctx.strokeStyle = '#667eea';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                
+                for (let i = 0; i < this.trainingLosses.length; i++) {
+                    const x = padding + (width - 2 * padding) * i / (this.trainingLosses.length - 1);
+                    const y = height - padding - ((this.trainingLosses[i] - min) / range) * (height - 2 * padding);
+                    
+                    if (i === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                }
+                ctx.stroke();
+            }
+            
+            addSequence() {
+                if (this.currentData.length === 0) {
+                    alert('Please generate data first!');
+                    return;
+                }
+                
+                this.sequences.push([...this.currentData]);
+                this.newSequences.push([...this.currentData]);
+                
+                document.getElementById('sequencesValue').textContent = this.sequences.length;
+                document.getElementById('addedCount').textContent = this.newSequences.length;
+                document.getElementById('addedSequencesInfo').style.display = 'block';
+                
+                const btn = event.target;
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '✅ Added!';
+                btn.style.background = 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.style.background = '';
+                }, 1500);
+                
+                this.generateData();
+            }
+            
+            async retrainNetwork() {
+                if (this.newSequences.length === 0) {
+                    alert('No new sequences to train on!');
+                    return;
+                }
+                
+                const btn = event.target;
+                const originalText = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '⏳ Retraining...';
+                
+                document.getElementById('progressContainer').classList.remove('hidden');
+                
+                const epochs = 50;
+                
+                for (let e = 0; e < epochs; e++) {
+                    const losses = this.lstm.train(this.sequences, 1, 0.001);
+                    this.trainingLosses.push(losses[0]);
+                    
+                    const loss = losses[0].toFixed(4);
+                    const progress = ((e + 1) / epochs) * 100;
+                    
+                    document.getElementById('epochValue').textContent = parseInt(document.getElementById('epochValue').textContent) + 1;
+                    document.getElementById('lossValue').textContent = loss;
+                    document.getElementById('progressPercent').textContent = progress.toFixed(0) + '%';
+                    document.getElementById('progressFill').style.width = progress + '%';
+                    document.getElementById('progressText').textContent = `Retraining ${e + 1}/${epochs}`;
+                    
+                    if (e % 3 === 0) {
+                        this.drawLossChart();
+                        await this.sleep(10);
+                    }
+                }
+                
+                document.getElementById('progressContainer').classList.add('hidden');
+                const badge = document.getElementById('statusBadge');
+                badge.textContent = `✅ LSTM Retrained • Loss: ${this.trainingLosses[this.trainingLosses.length - 1].toFixed(4)}`;
+                
+                this.newSequences = [];
+                document.getElementById('addedSequencesInfo').style.display = 'none';
+                
+                this.drawLossChart();
+                
+                btn.disabled = false;
+                btn.innerHTML = '✅ Complete!';
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                }, 2000);
+            }
+            
+            sleep(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+        }
+
+        let app;
+        window.addEventListener('load', () => {
+            app = new LSTMApp();
+        });
+    </script>
+</body>
+</html>

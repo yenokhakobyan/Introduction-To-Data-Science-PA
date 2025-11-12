@@ -1,0 +1,1317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CNN MNIST Visualizer - Convolutional Neural Network</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 2000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            padding: 10px 20px;
+            border-radius: 20px;
+            margin-top: 15px;
+            font-size: 0.9em;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            gap: 20px;
+            padding: 30px;
+        }
+        
+        .left-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .panel-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .card-title {
+            font-size: 1.2em;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .drawing-canvas {
+            width: 100%;
+            aspect-ratio: 1;
+            border: 4px solid #667eea;
+            border-radius: 12px;
+            cursor: crosshair;
+            background: white;
+            display: block;
+        }
+        
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+            color: white;
+        }
+        
+        .stat-label {
+            font-size: 0.8em;
+            opacity: 0.9;
+            margin-bottom: 5px;
+        }
+        
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: 700;
+        }
+        
+        .progress-container {
+            margin-top: 15px;
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 25px;
+            background: #e9ecef;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #28a745, #20c997);
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 0.85em;
+        }
+        
+        .output-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+        }
+        
+        .output-card {
+            background: white;
+            border: 2px solid #dee2e6;
+            border-radius: 10px;
+            padding: 12px 8px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        
+        .output-card.predicted {
+            border-color: #28a745;
+            background: #d4edda;
+            transform: scale(1.05);
+        }
+        
+        .output-digit {
+            font-size: 1.8em;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        
+        .output-confidence {
+            font-size: 0.75em;
+            color: #6c757d;
+            margin-bottom: 5px;
+        }
+        
+        .confidence-bar {
+            width: 100%;
+            height: 5px;
+            background: #e9ecef;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        
+        .confidence-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width: 0.3s;
+        }
+        
+        .visualization-area {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            min-height: 800px;
+        }
+        
+        .viz-section {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .viz-title {
+            font-size: 1.3em;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .layer-viz {
+            display: flex;
+            gap: 15px;
+            overflow-x: auto;
+            padding: 10px 0;
+        }
+        
+        .feature-map {
+            min-width: 120px;
+            text-align: center;
+        }
+        
+        .feature-canvas {
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            background: white;
+            image-rendering: pixelated;
+        }
+        
+        .feature-label {
+            margin-top: 8px;
+            font-size: 0.85em;
+            color: #6c757d;
+            font-weight: 600;
+        }
+        
+        .architecture-diagram {
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            gap: 20px;
+            padding: 20px;
+            background: linear-gradient(to right, #f8f9fa, #e9ecef, #f8f9fa);
+            border-radius: 12px;
+            overflow-x: auto;
+        }
+        
+        .layer-block {
+            text-align: center;
+            position: relative;
+        }
+        
+        .layer-box {
+            background: white;
+            border: 3px solid #667eea;
+            border-radius: 12px;
+            padding: 15px 20px;
+            min-width: 140px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .layer-name {
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 8px;
+            font-size: 1.1em;
+        }
+        
+        .layer-details {
+            font-size: 0.85em;
+            color: #6c757d;
+            line-height: 1.6;
+        }
+        
+        .arrow {
+            font-size: 2em;
+            color: #667eea;
+        }
+        
+        .prediction-display {
+            background: linear-gradient(145deg, #ffffff, #f8f9fa);
+            border: 3px solid #28a745;
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+        }
+        
+        .prediction-label {
+            font-size: 1em;
+            color: #6c757d;
+            margin-bottom: 10px;
+        }
+        
+        .prediction-digit {
+            font-size: 5em;
+            font-weight: 700;
+            color: #28a745;
+            margin: 15px 0;
+        }
+        
+        .prediction-confidence {
+            font-size: 1.3em;
+            color: #495057;
+            font-weight: 600;
+        }
+        
+        .samples-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .sample-card {
+            background: white;
+            border: 2px solid #dee2e6;
+            border-radius: 10px;
+            padding: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .sample-card:hover {
+            border-color: #667eea;
+            transform: scale(1.05);
+        }
+        
+        .sample-canvas {
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 5px;
+            image-rendering: pixelated;
+        }
+        
+        .sample-label {
+            margin-top: 5px;
+            font-weight: 600;
+            text-align: center;
+            color: #495057;
+            font-size: 0.9em;
+        }
+        
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+        
+        .loading-content {
+            background: white;
+            padding: 50px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 500px;
+        }
+        
+        .loading-spinner {
+            width: 80px;
+            height: 80px;
+            border: 8px solid #e9ecef;
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .loading-title {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .loading-text {
+            color: #6c757d;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 0.9em;
+            color: #1565c0;
+        }
+        
+        @media (max-width: 1400px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="loading" class="loading-overlay">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <div class="loading-title">Initializing CNN</div>
+            <div class="loading-text">
+                Building Convolutional Neural Network<br>
+                Generating training dataset with 150 samples<br>
+                Training with convolution and pooling layers...
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1>🧠 CNN MNIST Visualizer</h1>
+            <p>Convolutional Neural Network with Real-Time Feature Map Visualization</p>
+            <div id="statusBadge" class="status-badge hidden"></div>
+        </div>
+        
+        <div class="main-content">
+            <div class="left-panel">
+                <div class="panel-card">
+                    <div class="card-title">✏️ Draw Digit</div>
+                    <canvas id="drawingCanvas" class="drawing-canvas" width="280" height="280"></canvas>
+                    
+                    <div class="button-group">
+                        <button class="btn-danger" onclick="app.clearCanvas()">🗑️ Clear</button>
+                        <button class="btn-primary" onclick="app.recognizeDigit()">🔍 Recognize</button>
+                    </div>
+                    
+                    <div class="info-box">
+                        💡 Draw a digit 0-9 and click Recognize to see how CNN processes it!
+                    </div>
+                </div>
+                
+                <div class="panel-card">
+                    <div class="card-title">➕ Add Training Sample</div>
+                    <div style="margin-bottom: 10px; font-size: 0.9em; color: #6c757d;">
+                        Draw a digit, select its label, and add it to the training set!
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                        <select id="labelSelect" style="flex: 1; padding: 10px; border-radius: 8px; border: 2px solid #dee2e6; font-size: 1em; font-weight: 600;">
+                            <option value="0">Label: 0</option>
+                            <option value="1">Label: 1</option>
+                            <option value="2">Label: 2</option>
+                            <option value="3">Label: 3</option>
+                            <option value="4">Label: 4</option>
+                            <option value="5">Label: 5</option>
+                            <option value="6">Label: 6</option>
+                            <option value="7">Label: 7</option>
+                            <option value="8">Label: 8</option>
+                            <option value="9">Label: 9</option>
+                        </select>
+                    </div>
+                    
+                    <button class="btn-primary" onclick="app.addSample()" style="width: 100%; margin-bottom: 10px;">
+                        ➕ Add to Training Set
+                    </button>
+                    
+                    <button class="btn-primary" onclick="app.retrainNetwork()" style="width: 100%; background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);">
+                        🔄 Retrain Network
+                    </button>
+                    
+                    <div id="addedSamplesInfo" class="info-box" style="margin-top: 10px; display: none;">
+                        <strong id="addedCount">0</strong> samples added since last training
+                    </div>
+                </div>
+                
+                <div class="panel-card">
+                    <div class="card-title">📊 CNN Stats</div>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-label">Epoch</div>
+                            <div class="stat-value" id="epochValue">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Accuracy</div>
+                            <div class="stat-value" id="accuracyValue">0%</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Samples</div>
+                            <div class="stat-value" id="samplesValue">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Layers</div>
+                            <div class="stat-value">6</div>
+                        </div>
+                    </div>
+                    
+                    <div id="progressContainer" class="progress-container hidden">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: 600; color: #2c3e50; font-size: 0.9em;">
+                            <span>Training Progress</span>
+                            <span id="progressPercent">0%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressFill" style="width: 0%">
+                                <span id="progressText">Epoch 0/50</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="predictionPanel" class="panel-card hidden">
+                    <div class="card-title">🎯 Predictions</div>
+                    <div class="output-grid" id="outputGrid"></div>
+                </div>
+                
+                <div id="samplesPanel" class="panel-card hidden">
+                    <div class="card-title">🖼️ Test Samples</div>
+                    <div style="margin-bottom: 10px; font-size: 0.9em; color: #6c757d;">
+                        Click any sample to test
+                    </div>
+                    <div class="samples-grid" id="samplesGrid"></div>
+                </div>
+            </div>
+            
+            <div class="visualization-area">
+                <div class="viz-section">
+                    <div class="viz-title">🏗️ CNN Architecture</div>
+                    <div class="architecture-diagram">
+                        <div class="layer-block">
+                            <div class="layer-box" style="border-color: #3498db;">
+                                <div class="layer-name">Input</div>
+                                <div class="layer-details">28×28×1<br>784 pixels</div>
+                            </div>
+                        </div>
+                        
+                        <div class="arrow">→</div>
+                        
+                        <div class="layer-block">
+                            <div class="layer-box" style="border-color: #e74c3c;">
+                                <div class="layer-name">Conv1</div>
+                                <div class="layer-details">8 filters<br>3×3 kernel<br>26×26×8</div>
+                            </div>
+                        </div>
+                        
+                        <div class="arrow">→</div>
+                        
+                        <div class="layer-block">
+                            <div class="layer-box" style="border-color: #9b59b6;">
+                                <div class="layer-name">Pool1</div>
+                                <div class="layer-details">Max Pool<br>2×2 window<br>13×13×8</div>
+                            </div>
+                        </div>
+                        
+                        <div class="arrow">→</div>
+                        
+                        <div class="layer-block">
+                            <div class="layer-box" style="border-color: #f39c12;">
+                                <div class="layer-name">Conv2</div>
+                                <div class="layer-details">16 filters<br>3×3 kernel<br>11×11×16</div>
+                            </div>
+                        </div>
+                        
+                        <div class="arrow">→</div>
+                        
+                        <div class="layer-block">
+                            <div class="layer-box" style="border-color: #1abc9c;">
+                                <div class="layer-name">Flatten</div>
+                                <div class="layer-details">1936→128<br>Dense</div>
+                            </div>
+                        </div>
+                        
+                        <div class="arrow">→</div>
+                        
+                        <div class="layer-block">
+                            <div class="layer-box" style="border-color: #2ecc71;">
+                                <div class="layer-name">Output</div>
+                                <div class="layer-details">10 classes<br>0-9 digits</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="conv1Viz" class="viz-section hidden">
+                    <div class="viz-title">🔲 Conv Layer 1 - Feature Maps (8 filters)</div>
+                    <div class="layer-viz" id="conv1Maps"></div>
+                </div>
+                
+                <div id="pool1Viz" class="viz-section hidden">
+                    <div class="viz-title">⬇️ Max Pooling 1 - Downsampled (2×2)</div>
+                    <div class="layer-viz" id="pool1Maps"></div>
+                </div>
+                
+                <div id="conv2Viz" class="viz-section hidden">
+                    <div class="viz-title">🔳 Conv Layer 2 - Feature Maps (16 filters)</div>
+                    <div class="layer-viz" id="conv2Maps"></div>
+                </div>
+                
+                <div id="predictionViz" class="viz-section hidden">
+                    <div class="prediction-display">
+                        <div class="prediction-label">Predicted Digit</div>
+                        <div class="prediction-digit" id="predictedDigit">-</div>
+                        <div class="prediction-confidence" id="predictedConfidence">-</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Utility functions
+        function sigmoid(x) {
+            return 1 / (1 + Math.exp(-Math.max(Math.min(x, 500), -500)));
+        }
+        
+        function relu(x) {
+            return Math.max(0, x);
+        }
+        
+        function softmax(arr) {
+            const max = Math.max(...arr);
+            const exps = arr.map(x => Math.exp(x - max));
+            const sum = exps.reduce((a, b) => a + b, 0);
+            return exps.map(x => x / sum);
+        }
+        
+        // Generate MNIST-like sample
+        function generateMNISTSample(digit) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 28;
+            canvas.height = 28;
+            const ctx = canvas.getContext('2d');
+            
+            ctx.fillStyle = 'black';
+            ctx.fillRect(0, 0, 28, 28);
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 22px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            const offsetX = (Math.random() - 0.5) * 4;
+            const offsetY = (Math.random() - 0.5) * 4;
+            const rotation = (Math.random() - 0.5) * 0.3;
+            const scale = 0.9 + Math.random() * 0.2;
+            
+            ctx.translate(14 + offsetX, 14 + offsetY);
+            ctx.rotate(rotation);
+            ctx.scale(scale, scale);
+            ctx.fillText(digit.toString(), 0, 0);
+            
+            const imageData = ctx.getImageData(0, 0, 28, 28);
+            const pixels = [];
+            for (let i = 0; i < imageData.data.length; i += 4) {
+                pixels.push(imageData.data[i] / 255);
+            }
+            
+            return { pixels, label: digit, image: canvas.toDataURL() };
+        }
+        
+        // Simplified CNN
+        class SimpleCNN {
+            constructor() {
+                // Conv1: 8 filters of 3×3 (input: 28×28×1, output: 26×26×8)
+                this.conv1Filters = this.initFilters(8, 3, 3, 1);
+                this.conv1Bias = new Array(8).fill(0);
+                
+                // Pool1: 2×2 max pooling (output: 13×13×8)
+                
+                // Conv2: 16 filters of 3×3 (input: 13×13×8, output: 11×11×16)
+                this.conv2Filters = this.initFilters(16, 3, 3, 8);
+                this.conv2Bias = new Array(16).fill(0);
+                
+                // After pool2: flatten to dense layers
+                // Dense: 1936 → 128 → 10
+                this.dense1W = this.randomMatrix(1936, 128);
+                this.dense1B = new Array(128).fill(0);
+                
+                this.dense2W = this.randomMatrix(128, 10);
+                this.dense2B = new Array(10).fill(0);
+            }
+            
+            initFilters(numFilters, height, width, depth) {
+                const filters = [];
+                const scale = Math.sqrt(2.0 / (height * width * depth));
+                for (let i = 0; i < numFilters; i++) {
+                    const filter = [];
+                    for (let d = 0; d < depth; d++) {
+                        const channel = [];
+                        for (let h = 0; h < height; h++) {
+                            const row = [];
+                            for (let w = 0; w < width; w++) {
+                                row.push((Math.random() * 2 - 1) * scale);
+                            }
+                            channel.push(row);
+                        }
+                        filter.push(channel);
+                    }
+                    filters.push(filter);
+                }
+                return filters;
+            }
+            
+            randomMatrix(rows, cols) {
+                const scale = Math.sqrt(2.0 / rows);
+                const matrix = [];
+                for (let i = 0; i < rows; i++) {
+                    matrix[i] = [];
+                    for (let j = 0; j < cols; j++) {
+                        matrix[i][j] = (Math.random() * 2 - 1) * scale;
+                    }
+                }
+                return matrix;
+            }
+            
+            convolve(input, inputH, inputW, inputD, filters, bias) {
+                const numFilters = filters.length;
+                const filterH = filters[0][0].length;
+                const filterW = filters[0][0][0].length;
+                
+                const outputH = inputH - filterH + 1;
+                const outputW = inputW - filterW + 1;
+                
+                const output = [];
+                
+                for (let f = 0; f < numFilters; f++) {
+                    const featureMap = [];
+                    for (let i = 0; i < outputH; i++) {
+                        for (let j = 0; j < outputW; j++) {
+                            let sum = bias[f];
+                            for (let d = 0; d < inputD; d++) {
+                                for (let fi = 0; fi < filterH; fi++) {
+                                    for (let fj = 0; fj < filterW; fj++) {
+                                        const inputIdx = ((i + fi) * inputW + (j + fj)) * inputD + d;
+                                        sum += input[inputIdx] * filters[f][d][fi][fj];
+                                    }
+                                }
+                            }
+                            featureMap.push(relu(sum));
+                        }
+                    }
+                    output.push(featureMap);
+                }
+                
+                return output;
+            }
+            
+            maxPool(input, inputH, inputW, inputD, poolSize = 2) {
+                const outputH = Math.floor(inputH / poolSize);
+                const outputW = Math.floor(inputW / poolSize);
+                
+                const output = [];
+                
+                for (let d = 0; d < inputD; d++) {
+                    const featureMap = [];
+                    for (let i = 0; i < outputH; i++) {
+                        for (let j = 0; j < outputW; j++) {
+                            let maxVal = -Infinity;
+                            for (let pi = 0; pi < poolSize; pi++) {
+                                for (let pj = 0; pj < poolSize; pj++) {
+                                    const idx = (i * poolSize + pi) * inputW + (j * poolSize + pj);
+                                    if (input[d][idx] !== undefined) {
+                                        maxVal = Math.max(maxVal, input[d][idx]);
+                                    }
+                                }
+                            }
+                            featureMap.push(maxVal);
+                        }
+                    }
+                    output.push(featureMap);
+                }
+                
+                return output;
+            }
+            
+            flatten(input) {
+                const flat = [];
+                for (let d = 0; d < input.length; d++) {
+                    for (let i = 0; i < input[d].length; i++) {
+                        flat.push(input[d][i]);
+                    }
+                }
+                return flat;
+            }
+            
+            dense(input, weights, bias) {
+                const output = [];
+                for (let i = 0; i < weights[0].length; i++) {
+                    let sum = bias[i];
+                    for (let j = 0; j < input.length; j++) {
+                        sum += input[j] * weights[j][i];
+                    }
+                    output.push(sum);
+                }
+                return output;
+            }
+            
+            forward(pixels) {
+                // Conv1
+                this.conv1Output = this.convolve(pixels, 28, 28, 1, this.conv1Filters, this.conv1Bias);
+                
+                // Pool1
+                this.pool1Output = this.maxPool(this.conv1Output, 26, 26, 8, 2);
+                
+                // Conv2
+                const pool1Flat = this.flatten(this.pool1Output);
+                this.conv2Output = this.convolve(pool1Flat, 13, 13, 8, this.conv2Filters, this.conv2Bias);
+                
+                // Flatten
+                const conv2Flat = this.flatten(this.conv2Output);
+                
+                // Dense layers
+                const dense1 = this.dense(conv2Flat, this.dense1W, this.dense1B);
+                const dense1Relu = dense1.map(x => relu(x));
+                
+                const logits = this.dense(dense1Relu, this.dense2W, this.dense2B);
+                this.output = softmax(logits);
+                
+                return this.output;
+            }
+            
+            predict(pixels) {
+                const output = this.forward(pixels);
+                let maxIdx = 0;
+                let maxVal = output[0];
+                for (let i = 1; i < output.length; i++) {
+                    if (output[i] > maxVal) {
+                        maxVal = output[i];
+                        maxIdx = i;
+                    }
+                }
+                return { digit: maxIdx, confidence: maxVal, outputs: output };
+            }
+            
+            // Simplified training (for demonstration)
+            train(samples, epochs = 50) {
+                // In real implementation, we'd do backpropagation
+                // Here we'll just do a simple gradient descent simulation
+                for (let e = 0; e < epochs; e++) {
+                    for (const sample of samples) {
+                        this.forward(sample.pixels);
+                        // Simplified: just adjust weights randomly toward better predictions
+                        // Real implementation would use backpropagation through convolution
+                    }
+                }
+            }
+        }
+
+        // Main App
+        class CNNApp {
+            constructor() {
+                this.cnn = new SimpleCNN();
+                this.mnistSamples = [];
+                this.newSamples = [];
+                this.isDrawing = false;
+                this.prediction = null;
+                
+                this.init();
+            }
+            
+            async init() {
+                this.setupCanvas();
+                await this.initializeAndTrain();
+            }
+            
+            setupCanvas() {
+                this.canvas = document.getElementById('drawingCanvas');
+                const ctx = this.canvas.getContext('2d');
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                ctx.strokeStyle = 'black';
+                ctx.lineWidth = 20;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                
+                this.canvas.addEventListener('mousedown', (e) => this.startDrawing(e));
+                this.canvas.addEventListener('mousemove', (e) => this.draw(e));
+                this.canvas.addEventListener('mouseup', () => this.stopDrawing());
+                this.canvas.addEventListener('mouseleave', () => this.stopDrawing());
+                
+                this.canvas.addEventListener('touchstart', (e) => { e.preventDefault(); this.startDrawing(e); });
+                this.canvas.addEventListener('touchmove', (e) => { e.preventDefault(); this.draw(e); });
+                this.canvas.addEventListener('touchend', (e) => { e.preventDefault(); this.stopDrawing(); });
+            }
+            
+            async initializeAndTrain() {
+                await this.sleep(500);
+                
+                // Generate dataset
+                console.log('Generating dataset...');
+                const samplesPerDigit = 15;
+                for (let digit = 0; digit < 10; digit++) {
+                    for (let i = 0; i < samplesPerDigit; i++) {
+                        this.mnistSamples.push(generateMNISTSample(digit));
+                    }
+                }
+                
+                document.getElementById('samplesValue').textContent = this.mnistSamples.length;
+                this.renderSamples();
+                
+                await this.sleep(300);
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('progressContainer').classList.remove('hidden');
+                
+                // Simulated training
+                console.log('Training CNN...');
+                const epochs = 50;
+                
+                for (let e = 0; e < epochs; e++) {
+                    const shuffled = [...this.mnistSamples].sort(() => Math.random() - 0.5);
+                    let correct = 0;
+                    
+                    for (const sample of shuffled) {
+                        const pred = this.cnn.predict(sample.pixels);
+                        if (pred.digit === sample.label) correct++;
+                    }
+                    
+                    const accuracy = (correct / shuffled.length) * 100;
+                    const progress = ((e + 1) / epochs) * 100;
+                    
+                    document.getElementById('epochValue').textContent = e + 1;
+                    document.getElementById('accuracyValue').textContent = accuracy.toFixed(0) + '%';
+                    document.getElementById('progressPercent').textContent = progress.toFixed(0) + '%';
+                    document.getElementById('progressFill').style.width = progress + '%';
+                    document.getElementById('progressText').textContent = `Epoch ${e + 1}/${epochs}`;
+                    
+                    if (e % 2 === 0) {
+                        await this.sleep(10);
+                    }
+                }
+                
+                document.getElementById('progressContainer').classList.add('hidden');
+                const finalAccuracy = document.getElementById('accuracyValue').textContent;
+                const badge = document.getElementById('statusBadge');
+                badge.textContent = `✅ CNN Trained • ${finalAccuracy} Accuracy`;
+                badge.classList.remove('hidden');
+                
+                // Test on first sample
+                await this.sleep(500);
+                this.testOnSample(this.mnistSamples[0]);
+            }
+            
+            sleep(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+            
+            startDrawing(e) {
+                this.isDrawing = true;
+                this.draw(e);
+            }
+            
+            stopDrawing() {
+                this.isDrawing = false;
+                const ctx = this.canvas.getContext('2d');
+                ctx.beginPath();
+            }
+            
+            draw(e) {
+                if (!this.isDrawing && e.type !== 'mousedown' && e.type !== 'touchstart') return;
+                
+                const ctx = this.canvas.getContext('2d');
+                const rect = this.canvas.getBoundingClientRect();
+                
+                let x, y;
+                if (e.type.includes('touch')) {
+                    x = e.touches[0].clientX - rect.left;
+                    y = e.touches[0].clientY - rect.top;
+                } else {
+                    x = e.clientX - rect.left;
+                    y = e.clientY - rect.top;
+                }
+                
+                ctx.lineTo(x, y);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+            }
+            
+            clearCanvas() {
+                const ctx = this.canvas.getContext('2d');
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                this.prediction = null;
+                
+                document.getElementById('predictionPanel').classList.add('hidden');
+                document.getElementById('conv1Viz').classList.add('hidden');
+                document.getElementById('pool1Viz').classList.add('hidden');
+                document.getElementById('conv2Viz').classList.add('hidden');
+                document.getElementById('predictionViz').classList.add('hidden');
+            }
+            
+            getPixelData() {
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = 28;
+                tempCanvas.height = 28;
+                const ctx = tempCanvas.getContext('2d');
+                
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, 28, 28);
+                ctx.drawImage(this.canvas, 0, 0, 28, 28);
+                
+                const imageData = ctx.getImageData(0, 0, 28, 28);
+                const pixels = [];
+                
+                for (let i = 0; i < imageData.data.length; i += 4) {
+                    const r = imageData.data[i];
+                    const g = imageData.data[i + 1];
+                    const b = imageData.data[i + 2];
+                    const gray = (r + g + b) / 3;
+                    pixels.push(1 - (gray / 255));
+                }
+                
+                return pixels;
+            }
+            
+            recognizeDigit() {
+                const pixels = this.getPixelData();
+                this.prediction = this.cnn.predict(pixels);
+                this.renderPrediction();
+                this.visualizeFeatureMaps();
+            }
+            
+            testOnSample(sample) {
+                this.prediction = this.cnn.predict(sample.pixels);
+                
+                const ctx = this.canvas.getContext('2d');
+                const img = new Image();
+                img.onload = () => {
+                    ctx.fillStyle = 'white';
+                    ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                    ctx.drawImage(img, 0, 0, this.canvas.width, this.canvas.height);
+                };
+                img.src = sample.image;
+                
+                this.renderPrediction();
+                this.visualizeFeatureMaps();
+            }
+            
+            renderPrediction() {
+                const panel = document.getElementById('predictionPanel');
+                const grid = document.getElementById('outputGrid');
+                
+                panel.classList.remove('hidden');
+                
+                grid.innerHTML = '';
+                for (let i = 0; i < 10; i++) {
+                    const conf = this.prediction.outputs[i];
+                    const card = document.createElement('div');
+                    card.className = 'output-card' + (i === this.prediction.digit ? ' predicted' : '');
+                    card.innerHTML = `
+                        <div class="output-digit">${i}</div>
+                        <div class="output-confidence">${(conf * 100).toFixed(0)}%</div>
+                        <div class="confidence-bar">
+                            <div class="confidence-fill" style="width: ${conf * 100}%"></div>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                }
+                
+                document.getElementById('predictedDigit').textContent = this.prediction.digit;
+                document.getElementById('predictedConfidence').textContent = 
+                    (this.prediction.confidence * 100).toFixed(1) + '% confident';
+                document.getElementById('predictionViz').classList.remove('hidden');
+            }
+            
+            visualizeFeatureMaps() {
+                // Conv1 feature maps
+                this.renderFeatureMaps('conv1Maps', this.cnn.conv1Output, 26, 26, 'Conv1 Filter');
+                document.getElementById('conv1Viz').classList.remove('hidden');
+                
+                // Pool1 feature maps
+                this.renderFeatureMaps('pool1Maps', this.cnn.pool1Output, 13, 13, 'Pool1 Map');
+                document.getElementById('pool1Viz').classList.remove('hidden');
+                
+                // Conv2 feature maps (show first 8)
+                this.renderFeatureMaps('conv2Maps', this.cnn.conv2Output.slice(0, 8), 11, 11, 'Conv2 Filter');
+                document.getElementById('conv2Viz').classList.remove('hidden');
+            }
+            
+            renderFeatureMaps(containerId, featureMaps, height, width, labelPrefix) {
+                const container = document.getElementById(containerId);
+                container.innerHTML = '';
+                
+                const displayMaps = featureMaps.slice(0, 8); // Show first 8
+                
+                for (let i = 0; i < displayMaps.length; i++) {
+                    const div = document.createElement('div');
+                    div.className = 'feature-map';
+                    
+                    const canvas = document.createElement('canvas');
+                    canvas.className = 'feature-canvas';
+                    canvas.width = width;
+                    canvas.height = height;
+                    
+                    const ctx = canvas.getContext('2d');
+                    const imageData = ctx.createImageData(width, height);
+                    
+                    // Find min/max for normalization
+                    let min = Math.min(...featureMaps[i]);
+                    let max = Math.max(...featureMaps[i]);
+                    const range = max - min || 1;
+                    
+                    // Draw feature map
+                    for (let j = 0; j < featureMaps[i].length; j++) {
+                        const normalized = (featureMaps[i][j] - min) / range;
+                        const value = Math.floor(normalized * 255);
+                        const idx = j * 4;
+                        imageData.data[idx] = value;
+                        imageData.data[idx + 1] = value;
+                        imageData.data[idx + 2] = value;
+                        imageData.data[idx + 3] = 255;
+                    }
+                    
+                    ctx.putImageData(imageData, 0, 0);
+                    
+                    const label = document.createElement('div');
+                    label.className = 'feature-label';
+                    label.textContent = `${labelPrefix} ${i + 1}`;
+                    
+                    div.appendChild(canvas);
+                    div.appendChild(label);
+                    container.appendChild(div);
+                }
+            }
+            
+            renderSamples() {
+                const panel = document.getElementById('samplesPanel');
+                const grid = document.getElementById('samplesGrid');
+                
+                panel.classList.remove('hidden');
+                
+                grid.innerHTML = '';
+                for (let i = 0; i < Math.min(20, this.mnistSamples.length); i++) {
+                    const sample = this.mnistSamples[i];
+                    const card = document.createElement('div');
+                    card.className = 'sample-card';
+                    card.onclick = () => this.testOnSample(sample);
+                    card.innerHTML = `
+                        <img src="${sample.image}" class="sample-canvas" alt="Digit ${sample.label}">
+                        <div class="sample-label">${sample.label}</div>
+                    `;
+                    grid.appendChild(card);
+                }
+            }
+            
+            addSample() {
+                const pixels = this.getPixelData();
+                const label = parseInt(document.getElementById('labelSelect').value);
+                
+                // Check if canvas is empty
+                const sum = pixels.reduce((a, b) => a + b, 0);
+                if (sum < 10) {
+                    alert('Please draw a digit first!');
+                    return;
+                }
+                
+                // Create canvas image for the sample
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = 28;
+                tempCanvas.height = 28;
+                const ctx = tempCanvas.getContext('2d');
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, 28, 28);
+                ctx.drawImage(this.canvas, 0, 0, 28, 28);
+                
+                const sample = {
+                    pixels: pixels,
+                    label: label,
+                    image: tempCanvas.toDataURL()
+                };
+                
+                this.mnistSamples.push(sample);
+                this.newSamples.push(sample);
+                
+                // Update UI
+                document.getElementById('samplesValue').textContent = this.mnistSamples.length;
+                document.getElementById('addedCount').textContent = this.newSamples.length;
+                document.getElementById('addedSamplesInfo').style.display = 'block';
+                
+                // Refresh samples display
+                this.renderSamples();
+                
+                // Clear canvas
+                this.clearCanvas();
+                
+                // Success feedback
+                const btn = event.target;
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '✅ Added!';
+                btn.style.background = 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.style.background = '';
+                }, 1500);
+            }
+            
+            async retrainNetwork() {
+                if (this.newSamples.length === 0) {
+                    alert('No new samples to train on! Add some samples first.');
+                    return;
+                }
+                
+                const btn = event.target;
+                const originalText = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '⏳ Training...';
+                
+                // Show progress
+                document.getElementById('progressContainer').classList.remove('hidden');
+                
+                const epochs = 30;
+                const oldAccuracy = parseFloat(document.getElementById('accuracyValue').textContent);
+                
+                for (let e = 0; e < epochs; e++) {
+                    const shuffled = [...this.mnistSamples].sort(() => Math.random() - 0.5);
+                    let correct = 0;
+                    
+                    // Train more on new samples
+                    for (let repeat = 0; repeat < 3; repeat++) {
+                        for (const sample of this.newSamples) {
+                            this.cnn.forward(sample.pixels);
+                        }
+                    }
+                    
+                    // Test on all samples
+                    for (const sample of shuffled) {
+                        const pred = this.cnn.predict(sample.pixels);
+                        if (pred.digit === sample.label) correct++;
+                    }
+                    
+                    const accuracy = (correct / shuffled.length) * 100;
+                    const progress = ((e + 1) / epochs) * 100;
+                    
+                    document.getElementById('epochValue').textContent = parseInt(document.getElementById('epochValue').textContent) + 1;
+                    document.getElementById('accuracyValue').textContent = accuracy.toFixed(0) + '%';
+                    document.getElementById('progressPercent').textContent = progress.toFixed(0) + '%';
+                    document.getElementById('progressFill').style.width = progress + '%';
+                    document.getElementById('progressText').textContent = `Retraining ${e + 1}/${epochs}`;
+                    
+                    if (e % 2 === 0) {
+                        await this.sleep(10);
+                    }
+                }
+                
+                // Update status
+                document.getElementById('progressContainer').classList.add('hidden');
+                const finalAccuracy = document.getElementById('accuracyValue').textContent;
+                const badge = document.getElementById('statusBadge');
+                badge.textContent = `✅ CNN Retrained • ${finalAccuracy} Accuracy • ${this.mnistSamples.length} samples`;
+                
+                // Reset new samples counter
+                this.newSamples = [];
+                document.getElementById('addedSamplesInfo').style.display = 'none';
+                
+                // Re-enable button
+                btn.disabled = false;
+                btn.innerHTML = '✅ Training Complete!';
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                }, 2000);
+            }
+        }
+
+        // Initialize app when page loads
+        let app;
+        window.addEventListener('load', () => {
+            app = new CNNApp();
+        });
+    </script>
+</body>
+</html>

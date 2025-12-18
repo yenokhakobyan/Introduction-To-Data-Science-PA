@@ -1,0 +1,2079 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reinforcement Learning Interactive Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #eee;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #00d9ff;
+            text-shadow: 0 0 10px rgba(0, 217, 255, 0.5);
+        }
+
+        h2 {
+            color: #ff6b6b;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #ff6b6b;
+            padding-bottom: 5px;
+        }
+
+        h3 {
+            color: #ffd93d;
+            margin: 15px 0 10px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+
+        .tab-btn {
+            padding: 12px 24px;
+            background: #2d3a4a;
+            border: none;
+            color: #eee;
+            cursor: pointer;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .tab-btn:hover {
+            background: #3d4a5a;
+        }
+
+        .tab-btn.active {
+            background: #00d9ff;
+            color: #1a1a2e;
+            font-weight: bold;
+        }
+
+        .tab-content {
+            display: none;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Gridworld Styles */
+        .gridworld {
+            display: grid;
+            gap: 3px;
+            margin: 20px auto;
+            width: fit-content;
+        }
+
+        .cell {
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            border-radius: 8px;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .cell.empty {
+            background: #2d3a4a;
+        }
+
+        .cell.wall {
+            background: #444;
+        }
+
+        .cell.agent {
+            background: #00d9ff;
+            box-shadow: 0 0 15px rgba(0, 217, 255, 0.7);
+        }
+
+        .cell.goal {
+            background: #4ade80;
+            box-shadow: 0 0 15px rgba(74, 222, 128, 0.5);
+        }
+
+        .cell.visited {
+            background: rgba(0, 217, 255, 0.3);
+        }
+
+        .cell .value {
+            font-size: 10px;
+            color: #aaa;
+        }
+
+        .cell .arrow {
+            font-size: 18px;
+            color: #ffd93d;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 15px 0;
+            align-items: center;
+        }
+
+        button {
+            padding: 10px 20px;
+            background: #4ade80;
+            border: none;
+            color: #1a1a2e;
+            cursor: pointer;
+            border-radius: 8px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(74, 222, 128, 0.4);
+        }
+
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        input[type="range"] {
+            width: 150px;
+        }
+
+        select {
+            padding: 8px 15px;
+            background: #2d3a4a;
+            border: 1px solid #3d4a5a;
+            color: #eee;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        /* Info Panel */
+        .info-panel {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: monospace;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .stat {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            color: #00d9ff;
+            font-weight: bold;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #888;
+        }
+
+        /* Q-Table */
+        .q-table {
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        th, td {
+            padding: 8px;
+            border: 1px solid #3d4a5a;
+            text-align: center;
+        }
+
+        th {
+            background: #2d3a4a;
+            color: #00d9ff;
+        }
+
+        td {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        td.max-value {
+            background: rgba(74, 222, 128, 0.3);
+        }
+
+        /* Chart */
+        .chart-container {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        canvas {
+            max-width: 100%;
+        }
+
+        /* Explanation */
+        .explanation {
+            background: rgba(255, 107, 107, 0.1);
+            border-left: 4px solid #ff6b6b;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .formula {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            margin: 10px 0;
+            overflow-x: auto;
+        }
+
+        code {
+            background: rgba(0, 217, 255, 0.2);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+
+        /* Log */
+        .log {
+            background: #0a0a0a;
+            border-radius: 8px;
+            padding: 15px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+
+        .log-entry {
+            padding: 3px 0;
+            border-bottom: 1px solid #222;
+        }
+
+        .log-entry.reward-positive {
+            color: #4ade80;
+        }
+
+        .log-entry.reward-negative {
+            color: #ff6b6b;
+        }
+
+        /* Neural Network Visualization */
+        .nn-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .nn-layer {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin: 0 30px;
+        }
+
+        .nn-node {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #2d3a4a;
+            border: 2px solid #00d9ff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            transition: all 0.3s;
+        }
+
+        .nn-node.active {
+            background: #00d9ff;
+            color: #1a1a2e;
+            box-shadow: 0 0 15px rgba(0, 217, 255, 0.7);
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: relative;
+            cursor: help;
+            border-bottom: 1px dashed #888;
+        }
+
+        .tooltip::after {
+            content: attr(data-tip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1a1a2e;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            border: 1px solid #00d9ff;
+            z-index: 100;
+        }
+
+        .tooltip:hover::after {
+            opacity: 1;
+        }
+
+        /* Progress Bar */
+        .progress-bar {
+            height: 8px;
+            background: #2d3a4a;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00d9ff, #4ade80);
+            transition: width 0.3s;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .tabs {
+                flex-direction: column;
+            }
+
+            .cell {
+                width: 45px;
+                height: 45px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Reinforcement Learning Interactive Demo</h1>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="showTab('intro')">Introduction</button>
+            <button class="tab-btn" onclick="showTab('mdp')">MDP Basics</button>
+            <button class="tab-btn" onclick="showTab('dp')">Dynamic Programming</button>
+            <button class="tab-btn" onclick="showTab('mc')">Monte Carlo</button>
+            <button class="tab-btn" onclick="showTab('td')">TD Learning</button>
+            <button class="tab-btn" onclick="showTab('qlearning')">Q-Learning</button>
+            <button class="tab-btn" onclick="showTab('sarsa')">SARSA</button>
+            <button class="tab-btn" onclick="showTab('dqn')">Deep Q-Network</button>
+        </div>
+
+        <!-- Introduction Tab -->
+        <div id="intro" class="tab-content active">
+            <h2>What is Reinforcement Learning?</h2>
+
+            <div class="explanation">
+                <p>Reinforcement Learning (RL) is a type of machine learning where an <strong>agent</strong> learns to make decisions by interacting with an <strong>environment</strong>. The agent receives <strong>rewards</strong> or <strong>penalties</strong> based on its actions and learns to maximize cumulative reward over time.</p>
+            </div>
+
+            <div class="grid-container">
+                <div class="card">
+                    <h3>Core Components</h3>
+                    <ul style="list-style: none; padding: 10px;">
+                        <li><span style="color: #00d9ff;">Agent</span> - The learner/decision maker</li>
+                        <li><span style="color: #4ade80;">Environment</span> - The world the agent interacts with</li>
+                        <li><span style="color: #ffd93d;">State (s)</span> - Current situation</li>
+                        <li><span style="color: #ff6b6b;">Action (a)</span> - What the agent can do</li>
+                        <li><span style="color: #c084fc;">Reward (r)</span> - Feedback signal</li>
+                        <li><span style="color: #f472b6;">Policy (π)</span> - Agent's strategy</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h3>The RL Loop</h3>
+                    <div style="text-align: center; padding: 20px;">
+                        <svg width="250" height="180" viewBox="0 0 250 180">
+                            <defs>
+                                <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                                    <path d="M0,0 L0,6 L9,3 z" fill="#00d9ff"/>
+                                </marker>
+                            </defs>
+                            <!-- Agent -->
+                            <rect x="20" y="70" width="80" height="40" rx="8" fill="#2d3a4a" stroke="#00d9ff" stroke-width="2"/>
+                            <text x="60" y="95" text-anchor="middle" fill="#fff" font-size="14">Agent</text>
+                            <!-- Environment -->
+                            <rect x="150" y="70" width="80" height="40" rx="8" fill="#2d3a4a" stroke="#4ade80" stroke-width="2"/>
+                            <text x="190" y="95" text-anchor="middle" fill="#fff" font-size="14">Environment</text>
+                            <!-- Action arrow -->
+                            <path d="M100,80 L150,80" stroke="#ff6b6b" stroke-width="2" marker-end="url(#arrow)"/>
+                            <text x="125" y="70" text-anchor="middle" fill="#ff6b6b" font-size="11">Action</text>
+                            <!-- State/Reward arrow -->
+                            <path d="M150,100 L100,100" stroke="#ffd93d" stroke-width="2" marker-end="url(#arrow)"/>
+                            <text x="125" y="125" text-anchor="middle" fill="#ffd93d" font-size="11">State, Reward</text>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top: 20px;">
+                <h3>Exploration vs Exploitation</h3>
+                <p style="margin: 10px 0;">The fundamental dilemma in RL:</p>
+                <div class="grid-container">
+                    <div style="background: rgba(0, 217, 255, 0.1); padding: 15px; border-radius: 8px;">
+                        <strong style="color: #00d9ff;">Exploration</strong>
+                        <p style="font-size: 13px; margin-top: 5px;">Try new actions to discover potentially better rewards</p>
+                    </div>
+                    <div style="background: rgba(74, 222, 128, 0.1); padding: 15px; border-radius: 8px;">
+                        <strong style="color: #4ade80;">Exploitation</strong>
+                        <p style="font-size: 13px; margin-top: 5px;">Use known good actions to maximize current reward</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="formula">
+                <strong>Return (G):</strong> Total discounted reward from time t<br>
+                G<sub>t</sub> = r<sub>t+1</sub> + γr<sub>t+2</sub> + γ²r<sub>t+3</sub> + ... = Σ<sub>k=0</sub><sup>∞</sup> γ<sup>k</sup>r<sub>t+k+1</sub>
+                <br><br>
+                <strong>γ (gamma):</strong> Discount factor (0 ≤ γ ≤ 1) - determines how much we value future rewards
+            </div>
+        </div>
+
+        <!-- MDP Tab -->
+        <div id="mdp" class="tab-content">
+            <h2>Markov Decision Process (MDP)</h2>
+
+            <div class="explanation">
+                <p>An MDP is defined by the tuple <code>(S, A, P, R, γ)</code>: States, Actions, Transition Probabilities, Rewards, and Discount Factor. The <strong>Markov Property</strong> states that the future depends only on the current state, not on history.</p>
+            </div>
+
+            <div class="grid-container">
+                <div class="card">
+                    <h3>Interactive MDP Example</h3>
+                    <p style="margin: 10px 0; font-size: 13px;">Student deciding to study or party before an exam:</p>
+
+                    <div id="mdp-viz" style="text-align: center; padding: 20px;">
+                        <svg width="400" height="250" viewBox="0 0 400 250">
+                            <!-- States -->
+                            <circle cx="80" cy="80" r="35" fill="#2d3a4a" stroke="#00d9ff" stroke-width="2" id="mdp-s0"/>
+                            <text x="80" y="75" text-anchor="middle" fill="#fff" font-size="11">Friday</text>
+                            <text x="80" y="90" text-anchor="middle" fill="#888" font-size="9">Fresh</text>
+
+                            <circle cx="200" cy="40" r="35" fill="#2d3a4a" stroke="#ffd93d" stroke-width="2" id="mdp-s1"/>
+                            <text x="200" y="35" text-anchor="middle" fill="#fff" font-size="11">Saturday</text>
+                            <text x="200" y="50" text-anchor="middle" fill="#888" font-size="9">Studied</text>
+
+                            <circle cx="200" cy="120" r="35" fill="#2d3a4a" stroke="#ff6b6b" stroke-width="2" id="mdp-s2"/>
+                            <text x="200" y="115" text-anchor="middle" fill="#fff" font-size="11">Saturday</text>
+                            <text x="200" y="130" text-anchor="middle" fill="#888" font-size="9">Partied</text>
+
+                            <circle cx="340" cy="40" r="35" fill="#2d3a4a" stroke="#4ade80" stroke-width="2" id="mdp-s3"/>
+                            <text x="340" y="45" text-anchor="middle" fill="#4ade80" font-size="11">PASS!</text>
+
+                            <circle cx="340" cy="120" r="35" fill="#2d3a4a" stroke="#ff6b6b" stroke-width="2" id="mdp-s4"/>
+                            <text x="340" y="125" text-anchor="middle" fill="#ff6b6b" font-size="11">FAIL</text>
+
+                            <!-- Arrows -->
+                            <path d="M115,65 L165,50" stroke="#4ade80" stroke-width="2" marker-end="url(#arrow)"/>
+                            <text x="130" y="50" fill="#4ade80" font-size="9">Study (-2)</text>
+
+                            <path d="M115,95 L165,110" stroke="#ff6b6b" stroke-width="2" marker-end="url(#arrow)"/>
+                            <text x="130" y="120" fill="#ff6b6b" font-size="9">Party (+5)</text>
+
+                            <path d="M235,40 L305,40" stroke="#4ade80" stroke-width="2" marker-end="url(#arrow)"/>
+                            <text x="270" y="30" fill="#888" font-size="8">90%</text>
+
+                            <path d="M235,120 L305,120" stroke="#ff6b6b" stroke-width="2" marker-end="url(#arrow)"/>
+                            <text x="270" y="140" fill="#888" font-size="8">90%</text>
+                        </svg>
+                    </div>
+
+                    <div class="controls">
+                        <button onclick="simulateMDP('study')">Always Study</button>
+                        <button onclick="simulateMDP('party')">Always Party</button>
+                        <button onclick="simulateMDP('mixed')">Study → Party</button>
+                    </div>
+
+                    <div id="mdp-result" class="info-panel" style="display: none;">
+                        <p><strong>Expected Return:</strong> <span id="mdp-return">0</span></p>
+                        <p id="mdp-explanation"></p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Bellman Equation</h3>
+                    <div class="formula">
+                        <strong>State-Value Function:</strong><br>
+                        V<sup>π</sup>(s) = Σ<sub>a</sub> π(a|s) Σ<sub>s',r</sub> p(s',r|s,a)[r + γV<sup>π</sup>(s')]
+                        <br><br>
+                        <strong>Action-Value Function:</strong><br>
+                        Q<sup>π</sup>(s,a) = Σ<sub>s',r</sub> p(s',r|s,a)[r + γ Σ<sub>a'</sub> π(a'|s')Q<sup>π</sup>(s',a')]
+                        <br><br>
+                        <strong>Optimal Value (Bellman Optimality):</strong><br>
+                        V*(s) = max<sub>a</sub> Σ<sub>s',r</sub> p(s',r|s,a)[r + γV*(s')]
+                    </div>
+                    <p style="margin-top: 15px; font-size: 13px;">The Bellman equations express the value of a state in terms of the values of successor states - this recursive relationship is the foundation of most RL algorithms.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dynamic Programming Tab -->
+        <div id="dp" class="tab-content">
+            <h2>Dynamic Programming</h2>
+
+            <div class="explanation">
+                <p>Dynamic Programming methods solve MDPs when we have a <strong>complete model</strong> of the environment. They use the Bellman equations to iteratively compute optimal value functions and policies.</p>
+            </div>
+
+            <div class="grid-container">
+                <div class="card">
+                    <h3>Value Iteration Demo</h3>
+                    <p style="font-size: 13px; margin-bottom: 10px;">Watch the agent learn optimal values for each state:</p>
+
+                    <div id="vi-grid" class="gridworld" style="grid-template-columns: repeat(4, 60px);"></div>
+
+                    <div class="controls">
+                        <button onclick="viStep()">Step</button>
+                        <button onclick="viRun()">Run</button>
+                        <button onclick="viReset()">Reset</button>
+                        <label>
+                            Speed: <input type="range" id="vi-speed" min="100" max="1000" value="500">
+                        </label>
+                    </div>
+
+                    <div class="stats">
+                        <div class="stat">
+                            <div class="stat-value" id="vi-iteration">0</div>
+                            <div class="stat-label">Iteration</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value" id="vi-delta">0.00</div>
+                            <div class="stat-label">Max Change (Δ)</div>
+                        </div>
+                    </div>
+
+                    <div class="formula" style="margin-top: 15px;">
+                        <strong>Value Iteration Update:</strong><br>
+                        V(s) ← max<sub>a</sub> Σ<sub>s'</sub> p(s'|s,a)[r + γV(s')]
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Policy Iteration</h3>
+                    <p style="font-size: 13px; margin-bottom: 15px;">Alternates between:</p>
+
+                    <div style="display: flex; gap: 20px; margin-bottom: 20px;">
+                        <div style="flex: 1; background: rgba(0, 217, 255, 0.1); padding: 15px; border-radius: 8px;">
+                            <strong style="color: #00d9ff;">1. Policy Evaluation</strong>
+                            <p style="font-size: 12px; margin-top: 5px;">Compute V<sup>π</sup> for current policy</p>
+                        </div>
+                        <div style="flex: 1; background: rgba(74, 222, 128, 0.1); padding: 15px; border-radius: 8px;">
+                            <strong style="color: #4ade80;">2. Policy Improvement</strong>
+                            <p style="font-size: 12px; margin-top: 5px;">Make policy greedy w.r.t. V<sup>π</sup></p>
+                        </div>
+                    </div>
+
+                    <div id="pi-grid" class="gridworld" style="grid-template-columns: repeat(4, 60px);"></div>
+
+                    <div class="controls">
+                        <button onclick="piStep()">Step</button>
+                        <button onclick="piRun()">Run</button>
+                        <button onclick="piReset()">Reset</button>
+                    </div>
+
+                    <div id="pi-status" class="info-panel">
+                        Phase: <span id="pi-phase">Evaluation</span> | Iteration: <span id="pi-iter">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Monte Carlo Tab -->
+        <div id="mc" class="tab-content">
+            <h2>Monte Carlo Methods</h2>
+
+            <div class="explanation">
+                <p>Monte Carlo methods learn from <strong>complete episodes</strong> of experience. They don't require a model of the environment - instead, they estimate values by averaging actual returns from sampled episodes.</p>
+            </div>
+
+            <div class="grid-container">
+                <div class="card">
+                    <h3>Monte Carlo Prediction</h3>
+                    <p style="font-size: 13px; margin-bottom: 10px;">Agent explores and learns from complete episodes:</p>
+
+                    <div id="mc-grid" class="gridworld" style="grid-template-columns: repeat(5, 60px);"></div>
+
+                    <div class="controls">
+                        <button onclick="mcRunEpisode()">Run Episode</button>
+                        <button onclick="mcRun10()">Run 10 Episodes</button>
+                        <button onclick="mcReset()">Reset</button>
+                    </div>
+
+                    <div class="stats">
+                        <div class="stat">
+                            <div class="stat-value" id="mc-episodes">0</div>
+                            <div class="stat-label">Episodes</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value" id="mc-avg-return">0.00</div>
+                            <div class="stat-label">Avg Return</div>
+                        </div>
+                    </div>
+
+                    <div class="log" id="mc-log"></div>
+                </div>
+
+                <div class="card">
+                    <h3>How Monte Carlo Works</h3>
+
+                    <div class="formula">
+                        <strong>First-Visit MC:</strong><br>
+                        V(s) ← average of returns following first visits to s
+                        <br><br>
+                        <strong>Every-Visit MC:</strong><br>
+                        V(s) ← average of returns following all visits to s
+                        <br><br>
+                        <strong>Incremental Update:</strong><br>
+                        V(s) ← V(s) + α[G<sub>t</sub> - V(s)]
+                    </div>
+
+                    <h3 style="margin-top: 20px;">Advantages</h3>
+                    <ul style="padding-left: 20px; font-size: 13px;">
+                        <li>No model required (model-free)</li>
+                        <li>Can focus on interesting states</li>
+                        <li>Simple to understand and implement</li>
+                    </ul>
+
+                    <h3 style="margin-top: 15px;">Disadvantages</h3>
+                    <ul style="padding-left: 20px; font-size: 13px;">
+                        <li>Must wait for episode to end</li>
+                        <li>High variance in estimates</li>
+                        <li>Only for episodic tasks</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- TD Learning Tab -->
+        <div id="td" class="tab-content">
+            <h2>Temporal Difference (TD) Learning</h2>
+
+            <div class="explanation">
+                <p>TD learning combines ideas from Monte Carlo and Dynamic Programming. It learns from <strong>incomplete episodes</strong> by bootstrapping - updating estimates based on other estimates.</p>
+            </div>
+
+            <div class="grid-container">
+                <div class="card">
+                    <h3>TD(0) Learning Demo</h3>
+                    <p style="font-size: 13px; margin-bottom: 10px;">Updates after each step, not episode:</p>
+
+                    <div id="td-grid" class="gridworld" style="grid-template-columns: repeat(5, 60px);"></div>
+
+                    <div class="controls">
+                        <button onclick="tdStep()">Step</button>
+                        <button onclick="tdRunEpisode()">Run Episode</button>
+                        <button onclick="tdReset()">Reset</button>
+                        <label>
+                            α: <input type="range" id="td-alpha" min="0.01" max="0.5" step="0.01" value="0.1">
+                            <span id="td-alpha-val">0.1</span>
+                        </label>
+                    </div>
+
+                    <div class="stats">
+                        <div class="stat">
+                            <div class="stat-value" id="td-steps">0</div>
+                            <div class="stat-label">Steps</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value" id="td-episodes">0</div>
+                            <div class="stat-label">Episodes</div>
+                        </div>
+                    </div>
+
+                    <div class="log" id="td-log"></div>
+                </div>
+
+                <div class="card">
+                    <h3>TD vs Monte Carlo</h3>
+
+                    <div class="formula">
+                        <strong>TD(0) Update:</strong><br>
+                        V(s) ← V(s) + α[r + γV(s') - V(s)]
+                        <br><br>
+                        <span style="color: #ffd93d;">TD Target:</span> r + γV(s')<br>
+                        <span style="color: #ff6b6b;">TD Error (δ):</span> r + γV(s') - V(s)
+                    </div>
+
+                    <table style="margin-top: 20px;">
+                        <tr>
+                            <th>Feature</th>
+                            <th>Monte Carlo</th>
+                            <th>TD Learning</th>
+                        </tr>
+                        <tr>
+                            <td>Updates</td>
+                            <td>End of episode</td>
+                            <td>Every step</td>
+                        </tr>
+                        <tr>
+                            <td>Target</td>
+                            <td>Actual return G<sub>t</sub></td>
+                            <td>r + γV(s')</td>
+                        </tr>
+                        <tr>
+                            <td>Bias</td>
+                            <td>Unbiased</td>
+                            <td>Biased (bootstraps)</td>
+                        </tr>
+                        <tr>
+                            <td>Variance</td>
+                            <td>High</td>
+                            <td>Low</td>
+                        </tr>
+                        <tr>
+                            <td>Convergence</td>
+                            <td>Slower</td>
+                            <td>Faster (usually)</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Q-Learning Tab -->
+        <div id="qlearning" class="tab-content">
+            <h2>Q-Learning</h2>
+
+            <div class="explanation">
+                <p>Q-Learning is an <strong>off-policy</strong> TD control algorithm. It learns the optimal Q-function directly by using the max operator, regardless of what policy the agent is following (behavior policy).</p>
+            </div>
+
+            <div class="grid-container">
+                <div class="card">
+                    <h3>Q-Learning Demo</h3>
+
+                    <div id="ql-grid" class="gridworld" style="grid-template-columns: repeat(5, 60px);"></div>
+
+                    <div class="controls">
+                        <button onclick="qlStep()">Step</button>
+                        <button onclick="qlRunEpisode()">Run Episode</button>
+                        <button onclick="qlRun100()">Train 100 Episodes</button>
+                        <button onclick="qlReset()">Reset</button>
+                    </div>
+
+                    <div class="controls">
+                        <label>
+                            ε (exploration): <input type="range" id="ql-epsilon" min="0" max="1" step="0.05" value="0.3">
+                            <span id="ql-epsilon-val">0.3</span>
+                        </label>
+                        <label>
+                            α (learning rate): <input type="range" id="ql-alpha" min="0.01" max="0.5" step="0.01" value="0.1">
+                            <span id="ql-alpha-val">0.1</span>
+                        </label>
+                    </div>
+
+                    <div class="stats">
+                        <div class="stat">
+                            <div class="stat-value" id="ql-episodes">0</div>
+                            <div class="stat-label">Episodes</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value" id="ql-total-reward">0</div>
+                            <div class="stat-label">Total Reward</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Q-Table</h3>
+                    <div class="q-table" id="ql-table"></div>
+
+                    <div class="formula" style="margin-top: 15px;">
+                        <strong>Q-Learning Update:</strong><br>
+                        Q(s,a) ← Q(s,a) + α[r + γ max<sub>a'</sub>Q(s',a') - Q(s,a)]
+                        <br><br>
+                        <span style="color: #4ade80;">Key insight:</span> Uses max over next state's Q-values (off-policy)
+                    </div>
+
+                    <div class="explanation" style="margin-top: 15px;">
+                        <strong>ε-greedy Policy:</strong> With probability ε, take random action (explore). Otherwise, take action with highest Q-value (exploit).
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SARSA Tab -->
+        <div id="sarsa" class="tab-content">
+            <h2>SARSA (State-Action-Reward-State-Action)</h2>
+
+            <div class="explanation">
+                <p>SARSA is an <strong>on-policy</strong> TD control algorithm. Unlike Q-Learning, it uses the action actually taken in the next state (following the same policy) rather than the max action.</p>
+            </div>
+
+            <div class="grid-container">
+                <div class="card">
+                    <h3>SARSA Demo</h3>
+
+                    <div id="sarsa-grid" class="gridworld" style="grid-template-columns: repeat(5, 60px);"></div>
+
+                    <div class="controls">
+                        <button onclick="sarsaStep()">Step</button>
+                        <button onclick="sarsaRunEpisode()">Run Episode</button>
+                        <button onclick="sarsaRun100()">Train 100 Episodes</button>
+                        <button onclick="sarsaReset()">Reset</button>
+                    </div>
+
+                    <div class="controls">
+                        <label>
+                            ε: <input type="range" id="sarsa-epsilon" min="0" max="1" step="0.05" value="0.3">
+                            <span id="sarsa-epsilon-val">0.3</span>
+                        </label>
+                    </div>
+
+                    <div class="stats">
+                        <div class="stat">
+                            <div class="stat-value" id="sarsa-episodes">0</div>
+                            <div class="stat-label">Episodes</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value" id="sarsa-total-reward">0</div>
+                            <div class="stat-label">Total Reward</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Q-Learning vs SARSA</h3>
+
+                    <div class="formula">
+                        <strong>SARSA Update:</strong><br>
+                        Q(s,a) ← Q(s,a) + α[r + γQ(s',a') - Q(s,a)]
+                        <br><br>
+                        <span style="color: #ff6b6b;">Key difference:</span> Uses Q(s',a') where a' is the actual next action
+                    </div>
+
+                    <table style="margin-top: 20px;">
+                        <tr>
+                            <th>Feature</th>
+                            <th>Q-Learning</th>
+                            <th>SARSA</th>
+                        </tr>
+                        <tr>
+                            <td>Type</td>
+                            <td>Off-policy</td>
+                            <td>On-policy</td>
+                        </tr>
+                        <tr>
+                            <td>Target</td>
+                            <td>r + γ max Q(s',a')</td>
+                            <td>r + γ Q(s',a')</td>
+                        </tr>
+                        <tr>
+                            <td>Learns</td>
+                            <td>Optimal policy</td>
+                            <td>Policy being followed</td>
+                        </tr>
+                        <tr>
+                            <td>Safety</td>
+                            <td>More risky</td>
+                            <td>More conservative</td>
+                        </tr>
+                    </table>
+
+                    <div class="q-table" id="sarsa-table" style="margin-top: 15px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- DQN Tab -->
+        <div id="dqn" class="tab-content">
+            <h2>Deep Q-Network (DQN)</h2>
+
+            <div class="explanation">
+                <p>DQN combines Q-Learning with deep neural networks to handle high-dimensional state spaces. It uses <strong>experience replay</strong> and <strong>target networks</strong> to stabilize training.</p>
+            </div>
+
+            <div class="grid-container">
+                <div class="card">
+                    <h3>DQN Architecture</h3>
+
+                    <div class="nn-container">
+                        <div class="nn-layer">
+                            <div class="nn-node" id="dqn-i1">S1</div>
+                            <div class="nn-node" id="dqn-i2">S2</div>
+                            <div class="nn-node" id="dqn-i3">S3</div>
+                            <div class="nn-node" id="dqn-i4">S4</div>
+                        </div>
+                        <div style="color: #666;">→</div>
+                        <div class="nn-layer">
+                            <div class="nn-node" id="dqn-h1">H1</div>
+                            <div class="nn-node" id="dqn-h2">H2</div>
+                            <div class="nn-node" id="dqn-h3">H3</div>
+                        </div>
+                        <div style="color: #666;">→</div>
+                        <div class="nn-layer">
+                            <div class="nn-node" id="dqn-o1">Q(↑)</div>
+                            <div class="nn-node" id="dqn-o2">Q(↓)</div>
+                            <div class="nn-node" id="dqn-o3">Q(←)</div>
+                            <div class="nn-node" id="dqn-o4">Q(→)</div>
+                        </div>
+                    </div>
+                    <p style="text-align: center; font-size: 12px; color: #888;">Input (State) → Hidden Layers → Output (Q-values for each action)</p>
+
+                    <div class="controls" style="justify-content: center;">
+                        <button onclick="animateDQN()">Animate Forward Pass</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Key Innovations</h3>
+
+                    <div style="margin: 15px 0;">
+                        <h4 style="color: #00d9ff;">1. Experience Replay</h4>
+                        <p style="font-size: 13px; margin: 5px 0;">Store transitions (s, a, r, s') in a buffer and sample random mini-batches for training. Breaks correlation between consecutive samples.</p>
+
+                        <div id="replay-buffer" style="display: flex; gap: 5px; margin: 10px 0; flex-wrap: wrap;">
+                            <div class="replay-item" style="background: rgba(0, 217, 255, 0.2); padding: 5px 10px; border-radius: 4px; font-size: 11px;">(s₁,a₁,r₁,s₂)</div>
+                            <div class="replay-item" style="background: rgba(0, 217, 255, 0.2); padding: 5px 10px; border-radius: 4px; font-size: 11px;">(s₂,a₂,r₂,s₃)</div>
+                            <div class="replay-item" style="background: rgba(255, 107, 107, 0.3); padding: 5px 10px; border-radius: 4px; font-size: 11px;">sampled</div>
+                            <div class="replay-item" style="background: rgba(0, 217, 255, 0.2); padding: 5px 10px; border-radius: 4px; font-size: 11px;">(s₄,a₄,r₄,s₅)</div>
+                        </div>
+                    </div>
+
+                    <div style="margin: 15px 0;">
+                        <h4 style="color: #4ade80;">2. Target Network</h4>
+                        <p style="font-size: 13px; margin: 5px 0;">Use a separate network (θ⁻) for computing targets. Updated periodically to reduce oscillations.</p>
+                    </div>
+
+                    <div class="formula">
+                        <strong>DQN Loss:</strong><br>
+                        L(θ) = E[(r + γ max<sub>a'</sub>Q(s',a';θ⁻) - Q(s,a;θ))²]
+                        <br><br>
+                        θ: Online network parameters<br>
+                        θ⁻: Target network parameters (updated periodically)
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top: 20px;">
+                <h3>DQN Training Simulation</h3>
+
+                <div id="dqn-grid" class="gridworld" style="grid-template-columns: repeat(6, 60px);"></div>
+
+                <div class="controls">
+                    <button onclick="dqnTrain()">Train 50 Episodes</button>
+                    <button onclick="dqnTest()">Test Learned Policy</button>
+                    <button onclick="dqnReset()">Reset</button>
+                </div>
+
+                <div class="stats">
+                    <div class="stat">
+                        <div class="stat-value" id="dqn-episodes">0</div>
+                        <div class="stat-label">Episodes</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value" id="dqn-avg-reward">0.00</div>
+                        <div class="stat-label">Avg Reward (last 10)</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value" id="dqn-buffer-size">0</div>
+                        <div class="stat-label">Buffer Size</div>
+                    </div>
+                </div>
+
+                <div class="progress-bar">
+                    <div class="progress-fill" id="dqn-progress" style="width: 0%;"></div>
+                </div>
+
+                <div class="log" id="dqn-log"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            event.target.classList.add('active');
+
+            // Initialize grids when tab is shown
+            if (tabId === 'dp') { viReset(); piReset(); }
+            if (tabId === 'mc') mcReset();
+            if (tabId === 'td') tdReset();
+            if (tabId === 'qlearning') qlReset();
+            if (tabId === 'sarsa') sarsaReset();
+            if (tabId === 'dqn') dqnReset();
+        }
+
+        // ========== MDP Simulation ==========
+        function simulateMDP(strategy) {
+            const resultDiv = document.getElementById('mdp-result');
+            const returnSpan = document.getElementById('mdp-return');
+            const explanationP = document.getElementById('mdp-explanation');
+
+            let expectedReturn, explanation;
+
+            if (strategy === 'study') {
+                expectedReturn = 81;
+                explanation = "Study both nights: -2 + (-2) + [0.9×100 + 0.1×(-50)] = -4 + 85 = 81";
+            } else if (strategy === 'party') {
+                expectedReturn = -25;
+                explanation = "Party both nights: 5 + 5 + [0.1×100 + 0.9×(-50)] = 10 - 35 = -25";
+            } else {
+                expectedReturn = 28;
+                explanation = "Party then study: 5 + (-2) + [0.5×100 + 0.5×(-50)] = 3 + 25 = 28";
+            }
+
+            returnSpan.textContent = expectedReturn;
+            explanationP.textContent = explanation;
+            resultDiv.style.display = 'block';
+        }
+
+        // ========== Value Iteration ==========
+        let viState = { values: [], iteration: 0, running: false };
+        const viRows = 4, viCols = 4;
+        const viGoal = { r: 3, c: 3 };
+        const viWalls = [];
+        const viGamma = 0.9;
+
+        function viReset() {
+            viState.values = Array(viRows).fill().map(() => Array(viCols).fill(0));
+            viState.iteration = 0;
+            viState.running = false;
+            renderVIGrid();
+            document.getElementById('vi-iteration').textContent = '0';
+            document.getElementById('vi-delta').textContent = '0.00';
+        }
+
+        function renderVIGrid() {
+            const grid = document.getElementById('vi-grid');
+            grid.innerHTML = '';
+
+            for (let r = 0; r < viRows; r++) {
+                for (let c = 0; c < viCols; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell empty';
+
+                    if (r === viGoal.r && c === viGoal.c) {
+                        cell.className = 'cell goal';
+                        cell.innerHTML = '<span style="font-size:20px;">🎯</span>';
+                    } else {
+                        const value = viState.values[r][c].toFixed(2);
+                        const action = getBestAction(r, c, viState.values);
+                        cell.innerHTML = `<span class="arrow">${action}</span><br><span class="value">${value}</span>`;
+                    }
+
+                    grid.appendChild(cell);
+                }
+            }
+        }
+
+        function getBestAction(r, c, values) {
+            if (r === viGoal.r && c === viGoal.c) return '';
+
+            const actions = [
+                { dr: -1, dc: 0, arrow: '↑' },
+                { dr: 1, dc: 0, arrow: '↓' },
+                { dr: 0, dc: -1, arrow: '←' },
+                { dr: 0, dc: 1, arrow: '→' }
+            ];
+
+            let best = { value: -Infinity, arrow: '↑' };
+
+            for (const action of actions) {
+                let nr = r + action.dr;
+                let nc = c + action.dc;
+
+                if (nr < 0 || nr >= viRows || nc < 0 || nc >= viCols) {
+                    nr = r; nc = c;
+                }
+
+                const reward = (nr === viGoal.r && nc === viGoal.c) ? 10 : -0.1;
+                const qValue = reward + viGamma * values[nr][nc];
+
+                if (qValue > best.value) {
+                    best = { value: qValue, arrow: action.arrow };
+                }
+            }
+
+            return best.arrow;
+        }
+
+        function viStep() {
+            let maxDelta = 0;
+            const newValues = viState.values.map(row => [...row]);
+
+            for (let r = 0; r < viRows; r++) {
+                for (let c = 0; c < viCols; c++) {
+                    if (r === viGoal.r && c === viGoal.c) continue;
+
+                    let maxQ = -Infinity;
+                    const actions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+
+                    for (const [dr, dc] of actions) {
+                        let nr = r + dr, nc = c + dc;
+                        if (nr < 0 || nr >= viRows || nc < 0 || nc >= viCols) {
+                            nr = r; nc = c;
+                        }
+
+                        const reward = (nr === viGoal.r && nc === viGoal.c) ? 10 : -0.1;
+                        const q = reward + viGamma * viState.values[nr][nc];
+                        maxQ = Math.max(maxQ, q);
+                    }
+
+                    newValues[r][c] = maxQ;
+                    maxDelta = Math.max(maxDelta, Math.abs(newValues[r][c] - viState.values[r][c]));
+                }
+            }
+
+            viState.values = newValues;
+            viState.iteration++;
+
+            document.getElementById('vi-iteration').textContent = viState.iteration;
+            document.getElementById('vi-delta').textContent = maxDelta.toFixed(4);
+
+            renderVIGrid();
+            return maxDelta;
+        }
+
+        async function viRun() {
+            if (viState.running) return;
+            viState.running = true;
+
+            const speed = document.getElementById('vi-speed').value;
+
+            while (viState.running && viState.iteration < 100) {
+                const delta = viStep();
+                if (delta < 0.001) break;
+                await new Promise(r => setTimeout(r, 1100 - speed));
+            }
+
+            viState.running = false;
+        }
+
+        // ========== Policy Iteration ==========
+        let piState = { values: [], policy: [], phase: 'evaluation', iteration: 0, evalIter: 0 };
+
+        function piReset() {
+            piState.values = Array(viRows).fill().map(() => Array(viCols).fill(0));
+            piState.policy = Array(viRows).fill().map(() => Array(viCols).fill(0)); // 0=up, 1=down, 2=left, 3=right
+            piState.phase = 'evaluation';
+            piState.iteration = 0;
+            piState.evalIter = 0;
+            renderPIGrid();
+            document.getElementById('pi-phase').textContent = 'Evaluation';
+            document.getElementById('pi-iter').textContent = '0';
+        }
+
+        function renderPIGrid() {
+            const grid = document.getElementById('pi-grid');
+            grid.innerHTML = '';
+            const arrows = ['↑', '↓', '←', '→'];
+
+            for (let r = 0; r < viRows; r++) {
+                for (let c = 0; c < viCols; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell empty';
+
+                    if (r === viGoal.r && c === viGoal.c) {
+                        cell.className = 'cell goal';
+                        cell.innerHTML = '<span style="font-size:20px;">🎯</span>';
+                    } else {
+                        const value = piState.values[r][c].toFixed(2);
+                        const arrow = arrows[piState.policy[r][c]];
+                        cell.innerHTML = `<span class="arrow">${arrow}</span><br><span class="value">${value}</span>`;
+                    }
+
+                    grid.appendChild(cell);
+                }
+            }
+        }
+
+        function piStep() {
+            const actions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+
+            if (piState.phase === 'evaluation') {
+                // Policy evaluation step
+                const newValues = piState.values.map(row => [...row]);
+
+                for (let r = 0; r < viRows; r++) {
+                    for (let c = 0; c < viCols; c++) {
+                        if (r === viGoal.r && c === viGoal.c) continue;
+
+                        const [dr, dc] = actions[piState.policy[r][c]];
+                        let nr = r + dr, nc = c + dc;
+                        if (nr < 0 || nr >= viRows || nc < 0 || nc >= viCols) {
+                            nr = r; nc = c;
+                        }
+
+                        const reward = (nr === viGoal.r && nc === viGoal.c) ? 10 : -0.1;
+                        newValues[r][c] = reward + viGamma * piState.values[nr][nc];
+                    }
+                }
+
+                piState.values = newValues;
+                piState.evalIter++;
+
+                if (piState.evalIter >= 10) {
+                    piState.phase = 'improvement';
+                    piState.evalIter = 0;
+                }
+            } else {
+                // Policy improvement step
+                let policyStable = true;
+
+                for (let r = 0; r < viRows; r++) {
+                    for (let c = 0; c < viCols; c++) {
+                        if (r === viGoal.r && c === viGoal.c) continue;
+
+                        const oldAction = piState.policy[r][c];
+                        let bestAction = 0, bestQ = -Infinity;
+
+                        for (let a = 0; a < 4; a++) {
+                            const [dr, dc] = actions[a];
+                            let nr = r + dr, nc = c + dc;
+                            if (nr < 0 || nr >= viRows || nc < 0 || nc >= viCols) {
+                                nr = r; nc = c;
+                            }
+
+                            const reward = (nr === viGoal.r && nc === viGoal.c) ? 10 : -0.1;
+                            const q = reward + viGamma * piState.values[nr][nc];
+
+                            if (q > bestQ) {
+                                bestQ = q;
+                                bestAction = a;
+                            }
+                        }
+
+                        piState.policy[r][c] = bestAction;
+                        if (bestAction !== oldAction) policyStable = false;
+                    }
+                }
+
+                piState.iteration++;
+                piState.phase = 'evaluation';
+            }
+
+            document.getElementById('pi-phase').textContent = piState.phase === 'evaluation' ? 'Evaluation' : 'Improvement';
+            document.getElementById('pi-iter').textContent = piState.iteration;
+            renderPIGrid();
+        }
+
+        async function piRun() {
+            for (let i = 0; i < 50; i++) {
+                piStep();
+                await new Promise(r => setTimeout(r, 100));
+            }
+        }
+
+        // ========== Monte Carlo ==========
+        let mcState = { values: [], visits: [], episodes: 0, returns: [], agentPos: null };
+        const mcRows = 5, mcCols = 5;
+        const mcGoal = { r: 0, c: 4 };
+        const mcStart = { r: 4, c: 0 };
+
+        function mcReset() {
+            mcState.values = Array(mcRows).fill().map(() => Array(mcCols).fill(0));
+            mcState.visits = Array(mcRows).fill().map(() => Array(mcCols).fill(0));
+            mcState.episodes = 0;
+            mcState.returns = [];
+            mcState.agentPos = null;
+            renderMCGrid();
+            document.getElementById('mc-episodes').textContent = '0';
+            document.getElementById('mc-avg-return').textContent = '0.00';
+            document.getElementById('mc-log').innerHTML = '';
+        }
+
+        function renderMCGrid() {
+            const grid = document.getElementById('mc-grid');
+            grid.innerHTML = '';
+
+            for (let r = 0; r < mcRows; r++) {
+                for (let c = 0; c < mcCols; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell empty';
+
+                    if (mcState.agentPos && mcState.agentPos.r === r && mcState.agentPos.c === c) {
+                        cell.className = 'cell agent';
+                        cell.innerHTML = '<span style="font-size:18px;">🤖</span>';
+                    } else if (r === mcGoal.r && c === mcGoal.c) {
+                        cell.className = 'cell goal';
+                        cell.innerHTML = '<span style="font-size:18px;">🎯</span>';
+                    } else if (r === mcStart.r && c === mcStart.c) {
+                        cell.innerHTML = '<span style="font-size:14px;">🚀</span><br><span class="value">' + mcState.values[r][c].toFixed(1) + '</span>';
+                    } else {
+                        cell.innerHTML = '<span class="value">' + mcState.values[r][c].toFixed(1) + '</span>';
+                    }
+
+                    if (mcState.visits[r][c] > 0) {
+                        cell.style.background = `rgba(0, 217, 255, ${Math.min(mcState.visits[r][c] / 20, 0.5)})`;
+                    }
+
+                    grid.appendChild(cell);
+                }
+            }
+        }
+
+        async function mcRunEpisode() {
+            const episode = [];
+            let pos = { ...mcStart };
+            mcState.agentPos = { ...pos };
+            renderMCGrid();
+
+            const log = document.getElementById('mc-log');
+            log.innerHTML = `<div class="log-entry">Episode ${mcState.episodes + 1} started at (${pos.r}, ${pos.c})</div>` + log.innerHTML;
+
+            // Generate episode
+            while (!(pos.r === mcGoal.r && pos.c === mcGoal.c) && episode.length < 100) {
+                const actions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+
+                // Biased random walk towards goal
+                let probs = actions.map(([dr, dc]) => {
+                    let nr = pos.r + dr, nc = pos.c + dc;
+                    if (nr < 0 || nr >= mcRows || nc < 0 || nc >= mcCols) return 0.05;
+                    const distBefore = Math.abs(pos.r - mcGoal.r) + Math.abs(pos.c - mcGoal.c);
+                    const distAfter = Math.abs(nr - mcGoal.r) + Math.abs(nc - mcGoal.c);
+                    return distAfter < distBefore ? 0.6 : 0.2;
+                });
+                const sum = probs.reduce((a, b) => a + b);
+                probs = probs.map(p => p / sum);
+
+                // Sample action
+                let rand = Math.random(), cumSum = 0, actionIdx = 0;
+                for (let i = 0; i < probs.length; i++) {
+                    cumSum += probs[i];
+                    if (rand < cumSum) { actionIdx = i; break; }
+                }
+
+                const [dr, dc] = actions[actionIdx];
+                const oldPos = { ...pos };
+                let nr = pos.r + dr, nc = pos.c + dc;
+
+                if (nr >= 0 && nr < mcRows && nc >= 0 && nc < mcCols) {
+                    pos = { r: nr, c: nc };
+                }
+
+                const reward = (pos.r === mcGoal.r && pos.c === mcGoal.c) ? 10 : -0.1;
+                episode.push({ state: oldPos, reward });
+
+                mcState.agentPos = { ...pos };
+                renderMCGrid();
+                await new Promise(r => setTimeout(r, 50));
+            }
+
+            // Calculate returns and update values (first-visit MC)
+            let G = 0;
+            const visited = new Set();
+
+            for (let t = episode.length - 1; t >= 0; t--) {
+                G = viGamma * G + episode[t].reward;
+                const key = `${episode[t].state.r},${episode[t].state.c}`;
+
+                if (!visited.has(key)) {
+                    visited.add(key);
+                    const { r, c } = episode[t].state;
+                    mcState.visits[r][c]++;
+                    mcState.values[r][c] += (G - mcState.values[r][c]) / mcState.visits[r][c];
+                }
+            }
+
+            mcState.episodes++;
+            mcState.returns.push(G);
+            mcState.agentPos = null;
+
+            const avgReturn = mcState.returns.reduce((a, b) => a + b) / mcState.returns.length;
+            document.getElementById('mc-episodes').textContent = mcState.episodes;
+            document.getElementById('mc-avg-return').textContent = avgReturn.toFixed(2);
+
+            const rewardClass = G > 0 ? 'reward-positive' : 'reward-negative';
+            log.innerHTML = `<div class="log-entry ${rewardClass}">Episode ${mcState.episodes}: Return = ${G.toFixed(2)}, Steps = ${episode.length}</div>` + log.innerHTML;
+
+            renderMCGrid();
+        }
+
+        async function mcRun10() {
+            for (let i = 0; i < 10; i++) {
+                await mcRunEpisode();
+            }
+        }
+
+        // ========== TD Learning ==========
+        let tdState = { values: [], steps: 0, episodes: 0, agentPos: null };
+
+        function tdReset() {
+            tdState.values = Array(mcRows).fill().map(() => Array(mcCols).fill(0));
+            tdState.steps = 0;
+            tdState.episodes = 0;
+            tdState.agentPos = { ...mcStart };
+            renderTDGrid();
+            document.getElementById('td-steps').textContent = '0';
+            document.getElementById('td-episodes').textContent = '0';
+            document.getElementById('td-log').innerHTML = '';
+        }
+
+        function renderTDGrid() {
+            const grid = document.getElementById('td-grid');
+            grid.innerHTML = '';
+
+            for (let r = 0; r < mcRows; r++) {
+                for (let c = 0; c < mcCols; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell empty';
+
+                    if (tdState.agentPos && tdState.agentPos.r === r && tdState.agentPos.c === c) {
+                        cell.className = 'cell agent';
+                        cell.innerHTML = '<span style="font-size:18px;">🤖</span>';
+                    } else if (r === mcGoal.r && c === mcGoal.c) {
+                        cell.className = 'cell goal';
+                        cell.innerHTML = '<span style="font-size:18px;">🎯</span>';
+                    } else {
+                        cell.innerHTML = '<span class="value">' + tdState.values[r][c].toFixed(2) + '</span>';
+                    }
+
+                    grid.appendChild(cell);
+                }
+            }
+        }
+
+        document.getElementById('td-alpha').addEventListener('input', function() {
+            document.getElementById('td-alpha-val').textContent = this.value;
+        });
+
+        function tdStep() {
+            if (!tdState.agentPos) tdState.agentPos = { ...mcStart };
+
+            const alpha = parseFloat(document.getElementById('td-alpha').value);
+            const pos = tdState.agentPos;
+
+            // Random action
+            const actions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+            const [dr, dc] = actions[Math.floor(Math.random() * 4)];
+
+            let nr = pos.r + dr, nc = pos.c + dc;
+            if (nr < 0 || nr >= mcRows || nc < 0 || nc >= mcCols) {
+                nr = pos.r; nc = pos.c;
+            }
+
+            const reward = (nr === mcGoal.r && nc === mcGoal.c) ? 10 : -0.1;
+            const nextValue = (nr === mcGoal.r && nc === mcGoal.c) ? 0 : tdState.values[nr][nc];
+
+            // TD(0) update
+            const tdTarget = reward + viGamma * nextValue;
+            const tdError = tdTarget - tdState.values[pos.r][pos.c];
+            tdState.values[pos.r][pos.c] += alpha * tdError;
+
+            tdState.steps++;
+
+            const log = document.getElementById('td-log');
+            const errorClass = tdError > 0 ? 'reward-positive' : 'reward-negative';
+            log.innerHTML = `<div class="log-entry ${errorClass}">Step ${tdState.steps}: (${pos.r},${pos.c})→(${nr},${nc}), r=${reward.toFixed(1)}, δ=${tdError.toFixed(3)}</div>` + log.innerHTML;
+            if (log.children.length > 20) log.removeChild(log.lastChild);
+
+            if (nr === mcGoal.r && nc === mcGoal.c) {
+                tdState.episodes++;
+                tdState.agentPos = { ...mcStart };
+            } else {
+                tdState.agentPos = { r: nr, c: nc };
+            }
+
+            document.getElementById('td-steps').textContent = tdState.steps;
+            document.getElementById('td-episodes').textContent = tdState.episodes;
+            renderTDGrid();
+        }
+
+        async function tdRunEpisode() {
+            tdState.agentPos = { ...mcStart };
+            let steps = 0;
+
+            while (!(tdState.agentPos.r === mcGoal.r && tdState.agentPos.c === mcGoal.c) && steps < 200) {
+                tdStep();
+                steps++;
+                await new Promise(r => setTimeout(r, 30));
+            }
+        }
+
+        // ========== Q-Learning ==========
+        let qlState = { Q: {}, episodes: 0, totalReward: 0, agentPos: null };
+
+        function qlReset() {
+            qlState.Q = {};
+            qlState.episodes = 0;
+            qlState.totalReward = 0;
+            qlState.agentPos = { ...mcStart };
+            renderQLGrid();
+            renderQTable('ql-table', qlState.Q);
+            document.getElementById('ql-episodes').textContent = '0';
+            document.getElementById('ql-total-reward').textContent = '0';
+        }
+
+        function getQ(Q, r, c, a) {
+            const key = `${r},${c},${a}`;
+            return Q[key] || 0;
+        }
+
+        function setQ(Q, r, c, a, value) {
+            Q[`${r},${c},${a}`] = value;
+        }
+
+        function getMaxQ(Q, r, c) {
+            let maxQ = -Infinity;
+            for (let a = 0; a < 4; a++) {
+                maxQ = Math.max(maxQ, getQ(Q, r, c, a));
+            }
+            return maxQ === -Infinity ? 0 : maxQ;
+        }
+
+        function getBestActionFromQ(Q, r, c) {
+            let best = 0, bestQ = getQ(Q, r, c, 0);
+            for (let a = 1; a < 4; a++) {
+                const q = getQ(Q, r, c, a);
+                if (q > bestQ) { bestQ = q; best = a; }
+            }
+            return best;
+        }
+
+        function renderQLGrid() {
+            const grid = document.getElementById('ql-grid');
+            grid.innerHTML = '';
+            const arrows = ['↑', '↓', '←', '→'];
+
+            for (let r = 0; r < mcRows; r++) {
+                for (let c = 0; c < mcCols; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell empty';
+
+                    if (qlState.agentPos && qlState.agentPos.r === r && qlState.agentPos.c === c) {
+                        cell.className = 'cell agent';
+                        cell.innerHTML = '<span style="font-size:18px;">🤖</span>';
+                    } else if (r === mcGoal.r && c === mcGoal.c) {
+                        cell.className = 'cell goal';
+                        cell.innerHTML = '<span style="font-size:18px;">🎯</span>';
+                    } else {
+                        const bestA = getBestActionFromQ(qlState.Q, r, c);
+                        const maxQ = getMaxQ(qlState.Q, r, c);
+                        cell.innerHTML = `<span class="arrow">${arrows[bestA]}</span><br><span class="value">${maxQ.toFixed(1)}</span>`;
+                    }
+
+                    grid.appendChild(cell);
+                }
+            }
+        }
+
+        function renderQTable(containerId, Q) {
+            const container = document.getElementById(containerId);
+            const arrows = ['↑', '↓', '←', '→'];
+
+            let html = '<table><tr><th>State</th>';
+            arrows.forEach(a => html += `<th>${a}</th>`);
+            html += '</tr>';
+
+            for (let r = 0; r < mcRows; r++) {
+                for (let c = 0; c < mcCols; c++) {
+                    if (r === mcGoal.r && c === mcGoal.c) continue;
+
+                    const maxQ = getMaxQ(Q, r, c);
+                    html += `<tr><td>(${r},${c})</td>`;
+
+                    for (let a = 0; a < 4; a++) {
+                        const q = getQ(Q, r, c, a);
+                        const isMax = Math.abs(q - maxQ) < 0.01 && maxQ !== 0;
+                        html += `<td class="${isMax ? 'max-value' : ''}">${q.toFixed(2)}</td>`;
+                    }
+                    html += '</tr>';
+                }
+            }
+
+            html += '</table>';
+            container.innerHTML = html;
+        }
+
+        document.getElementById('ql-epsilon').addEventListener('input', function() {
+            document.getElementById('ql-epsilon-val').textContent = this.value;
+        });
+
+        document.getElementById('ql-alpha').addEventListener('input', function() {
+            document.getElementById('ql-alpha-val').textContent = this.value;
+        });
+
+        function qlStep() {
+            if (!qlState.agentPos || (qlState.agentPos.r === mcGoal.r && qlState.agentPos.c === mcGoal.c)) {
+                qlState.agentPos = { ...mcStart };
+            }
+
+            const epsilon = parseFloat(document.getElementById('ql-epsilon').value);
+            const alpha = parseFloat(document.getElementById('ql-alpha').value);
+            const pos = qlState.agentPos;
+
+            // ε-greedy action selection
+            let action;
+            if (Math.random() < epsilon) {
+                action = Math.floor(Math.random() * 4);
+            } else {
+                action = getBestActionFromQ(qlState.Q, pos.r, pos.c);
+            }
+
+            const actions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+            const [dr, dc] = actions[action];
+
+            let nr = pos.r + dr, nc = pos.c + dc;
+            if (nr < 0 || nr >= mcRows || nc < 0 || nc >= mcCols) {
+                nr = pos.r; nc = pos.c;
+            }
+
+            const reward = (nr === mcGoal.r && nc === mcGoal.c) ? 10 : -0.1;
+            qlState.totalReward += reward;
+
+            // Q-Learning update: Q(s,a) += α[r + γ max Q(s',a') - Q(s,a)]
+            const maxNextQ = (nr === mcGoal.r && nc === mcGoal.c) ? 0 : getMaxQ(qlState.Q, nr, nc);
+            const oldQ = getQ(qlState.Q, pos.r, pos.c, action);
+            const newQ = oldQ + alpha * (reward + viGamma * maxNextQ - oldQ);
+            setQ(qlState.Q, pos.r, pos.c, action, newQ);
+
+            if (nr === mcGoal.r && nc === mcGoal.c) {
+                qlState.episodes++;
+                qlState.agentPos = { ...mcStart };
+            } else {
+                qlState.agentPos = { r: nr, c: nc };
+            }
+
+            document.getElementById('ql-episodes').textContent = qlState.episodes;
+            document.getElementById('ql-total-reward').textContent = qlState.totalReward.toFixed(0);
+            renderQLGrid();
+        }
+
+        async function qlRunEpisode() {
+            qlState.agentPos = { ...mcStart };
+            let steps = 0;
+
+            while (!(qlState.agentPos.r === mcGoal.r && qlState.agentPos.c === mcGoal.c) && steps < 200) {
+                qlStep();
+                steps++;
+                await new Promise(r => setTimeout(r, 30));
+            }
+
+            renderQTable('ql-table', qlState.Q);
+        }
+
+        async function qlRun100() {
+            for (let i = 0; i < 100; i++) {
+                qlState.agentPos = { ...mcStart };
+                let steps = 0;
+
+                while (!(qlState.agentPos.r === mcGoal.r && qlState.agentPos.c === mcGoal.c) && steps < 200) {
+                    qlStep();
+                    steps++;
+                }
+
+                if (i % 10 === 0) {
+                    renderQLGrid();
+                    renderQTable('ql-table', qlState.Q);
+                    await new Promise(r => setTimeout(r, 10));
+                }
+            }
+
+            renderQLGrid();
+            renderQTable('ql-table', qlState.Q);
+        }
+
+        // ========== SARSA ==========
+        let sarsaState = { Q: {}, episodes: 0, totalReward: 0, agentPos: null, nextAction: null };
+
+        function sarsaReset() {
+            sarsaState.Q = {};
+            sarsaState.episodes = 0;
+            sarsaState.totalReward = 0;
+            sarsaState.agentPos = { ...mcStart };
+            sarsaState.nextAction = null;
+            renderSarsaGrid();
+            renderQTable('sarsa-table', sarsaState.Q);
+            document.getElementById('sarsa-episodes').textContent = '0';
+            document.getElementById('sarsa-total-reward').textContent = '0';
+        }
+
+        function renderSarsaGrid() {
+            const grid = document.getElementById('sarsa-grid');
+            grid.innerHTML = '';
+            const arrows = ['↑', '↓', '←', '→'];
+
+            for (let r = 0; r < mcRows; r++) {
+                for (let c = 0; c < mcCols; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell empty';
+
+                    if (sarsaState.agentPos && sarsaState.agentPos.r === r && sarsaState.agentPos.c === c) {
+                        cell.className = 'cell agent';
+                        cell.innerHTML = '<span style="font-size:18px;">🤖</span>';
+                    } else if (r === mcGoal.r && c === mcGoal.c) {
+                        cell.className = 'cell goal';
+                        cell.innerHTML = '<span style="font-size:18px;">🎯</span>';
+                    } else {
+                        const bestA = getBestActionFromQ(sarsaState.Q, r, c);
+                        const maxQ = getMaxQ(sarsaState.Q, r, c);
+                        cell.innerHTML = `<span class="arrow">${arrows[bestA]}</span><br><span class="value">${maxQ.toFixed(1)}</span>`;
+                    }
+
+                    grid.appendChild(cell);
+                }
+            }
+        }
+
+        document.getElementById('sarsa-epsilon').addEventListener('input', function() {
+            document.getElementById('sarsa-epsilon-val').textContent = this.value;
+        });
+
+        function sarsaSelectAction(r, c) {
+            const epsilon = parseFloat(document.getElementById('sarsa-epsilon').value);
+            if (Math.random() < epsilon) {
+                return Math.floor(Math.random() * 4);
+            }
+            return getBestActionFromQ(sarsaState.Q, r, c);
+        }
+
+        function sarsaStep() {
+            if (!sarsaState.agentPos || (sarsaState.agentPos.r === mcGoal.r && sarsaState.agentPos.c === mcGoal.c)) {
+                sarsaState.agentPos = { ...mcStart };
+                sarsaState.nextAction = null;
+            }
+
+            const alpha = 0.1;
+            const pos = sarsaState.agentPos;
+
+            // Select action (use preselected or select new)
+            const action = sarsaState.nextAction !== null ? sarsaState.nextAction : sarsaSelectAction(pos.r, pos.c);
+
+            const actions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+            const [dr, dc] = actions[action];
+
+            let nr = pos.r + dr, nc = pos.c + dc;
+            if (nr < 0 || nr >= mcRows || nc < 0 || nc >= mcCols) {
+                nr = pos.r; nc = pos.c;
+            }
+
+            const reward = (nr === mcGoal.r && nc === mcGoal.c) ? 10 : -0.1;
+            sarsaState.totalReward += reward;
+
+            // Select next action (for SARSA update)
+            const nextAction = (nr === mcGoal.r && nc === mcGoal.c) ? 0 : sarsaSelectAction(nr, nc);
+            sarsaState.nextAction = nextAction;
+
+            // SARSA update: Q(s,a) += α[r + γ Q(s',a') - Q(s,a)]
+            const nextQ = (nr === mcGoal.r && nc === mcGoal.c) ? 0 : getQ(sarsaState.Q, nr, nc, nextAction);
+            const oldQ = getQ(sarsaState.Q, pos.r, pos.c, action);
+            const newQ = oldQ + alpha * (reward + viGamma * nextQ - oldQ);
+            setQ(sarsaState.Q, pos.r, pos.c, action, newQ);
+
+            if (nr === mcGoal.r && nc === mcGoal.c) {
+                sarsaState.episodes++;
+                sarsaState.agentPos = { ...mcStart };
+                sarsaState.nextAction = null;
+            } else {
+                sarsaState.agentPos = { r: nr, c: nc };
+            }
+
+            document.getElementById('sarsa-episodes').textContent = sarsaState.episodes;
+            document.getElementById('sarsa-total-reward').textContent = sarsaState.totalReward.toFixed(0);
+            renderSarsaGrid();
+        }
+
+        async function sarsaRunEpisode() {
+            sarsaState.agentPos = { ...mcStart };
+            sarsaState.nextAction = null;
+            let steps = 0;
+
+            while (!(sarsaState.agentPos.r === mcGoal.r && sarsaState.agentPos.c === mcGoal.c) && steps < 200) {
+                sarsaStep();
+                steps++;
+                await new Promise(r => setTimeout(r, 30));
+            }
+
+            renderQTable('sarsa-table', sarsaState.Q);
+        }
+
+        async function sarsaRun100() {
+            for (let i = 0; i < 100; i++) {
+                sarsaState.agentPos = { ...mcStart };
+                sarsaState.nextAction = null;
+                let steps = 0;
+
+                while (!(sarsaState.agentPos.r === mcGoal.r && sarsaState.agentPos.c === mcGoal.c) && steps < 200) {
+                    sarsaStep();
+                    steps++;
+                }
+
+                if (i % 10 === 0) {
+                    renderSarsaGrid();
+                    renderQTable('sarsa-table', sarsaState.Q);
+                    await new Promise(r => setTimeout(r, 10));
+                }
+            }
+
+            renderSarsaGrid();
+            renderQTable('sarsa-table', sarsaState.Q);
+        }
+
+        // ========== DQN Simulation ==========
+        let dqnState = { Q: {}, episodes: 0, rewards: [], buffer: [], agentPos: null };
+        const dqnRows = 6, dqnCols = 6;
+        const dqnGoal = { r: 0, c: 5 };
+        const dqnStart = { r: 5, c: 0 };
+        const dqnWalls = [{r:2,c:2}, {r:2,c:3}, {r:3,c:2}];
+
+        function dqnReset() {
+            dqnState.Q = {};
+            dqnState.episodes = 0;
+            dqnState.rewards = [];
+            dqnState.buffer = [];
+            dqnState.agentPos = { ...dqnStart };
+            renderDQNGrid();
+            document.getElementById('dqn-episodes').textContent = '0';
+            document.getElementById('dqn-avg-reward').textContent = '0.00';
+            document.getElementById('dqn-buffer-size').textContent = '0';
+            document.getElementById('dqn-progress').style.width = '0%';
+            document.getElementById('dqn-log').innerHTML = '';
+        }
+
+        function isWall(r, c) {
+            return dqnWalls.some(w => w.r === r && w.c === c);
+        }
+
+        function renderDQNGrid() {
+            const grid = document.getElementById('dqn-grid');
+            grid.innerHTML = '';
+            const arrows = ['↑', '↓', '←', '→'];
+
+            for (let r = 0; r < dqnRows; r++) {
+                for (let c = 0; c < dqnCols; c++) {
+                    const cell = document.createElement('div');
+
+                    if (isWall(r, c)) {
+                        cell.className = 'cell wall';
+                        cell.innerHTML = '🧱';
+                    } else if (dqnState.agentPos && dqnState.agentPos.r === r && dqnState.agentPos.c === c) {
+                        cell.className = 'cell agent';
+                        cell.innerHTML = '<span style="font-size:18px;">🤖</span>';
+                    } else if (r === dqnGoal.r && c === dqnGoal.c) {
+                        cell.className = 'cell goal';
+                        cell.innerHTML = '<span style="font-size:18px;">🎯</span>';
+                    } else {
+                        cell.className = 'cell empty';
+                        const bestA = getBestActionFromQ(dqnState.Q, r, c);
+                        const maxQ = getMaxQ(dqnState.Q, r, c);
+                        if (maxQ !== 0) {
+                            cell.innerHTML = `<span class="arrow">${arrows[bestA]}</span><br><span class="value">${maxQ.toFixed(1)}</span>`;
+                        }
+                    }
+
+                    grid.appendChild(cell);
+                }
+            }
+        }
+
+        function animateDQN() {
+            const nodes = ['dqn-i1', 'dqn-i2', 'dqn-i3', 'dqn-i4', 'dqn-h1', 'dqn-h2', 'dqn-h3', 'dqn-o1', 'dqn-o2', 'dqn-o3', 'dqn-o4'];
+
+            nodes.forEach(id => document.getElementById(id).classList.remove('active'));
+
+            let delay = 0;
+            // Input layer
+            ['dqn-i1', 'dqn-i2', 'dqn-i3', 'dqn-i4'].forEach(id => {
+                setTimeout(() => document.getElementById(id).classList.add('active'), delay);
+                delay += 100;
+            });
+
+            // Hidden layer
+            delay += 200;
+            ['dqn-h1', 'dqn-h2', 'dqn-h3'].forEach(id => {
+                setTimeout(() => document.getElementById(id).classList.add('active'), delay);
+                delay += 100;
+            });
+
+            // Output layer
+            delay += 200;
+            ['dqn-o1', 'dqn-o2', 'dqn-o3', 'dqn-o4'].forEach(id => {
+                setTimeout(() => document.getElementById(id).classList.add('active'), delay);
+                delay += 100;
+            });
+
+            // Clear after animation
+            setTimeout(() => {
+                nodes.forEach(id => document.getElementById(id).classList.remove('active'));
+            }, delay + 500);
+        }
+
+        function dqnStep() {
+            if (!dqnState.agentPos || (dqnState.agentPos.r === dqnGoal.r && dqnState.agentPos.c === dqnGoal.c)) {
+                return true; // Episode done
+            }
+
+            const epsilon = Math.max(0.1, 1 - dqnState.episodes / 50);
+            const alpha = 0.1;
+            const pos = dqnState.agentPos;
+
+            // ε-greedy action selection
+            let action;
+            if (Math.random() < epsilon) {
+                action = Math.floor(Math.random() * 4);
+            } else {
+                action = getBestActionFromQ(dqnState.Q, pos.r, pos.c);
+            }
+
+            const actions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+            const [dr, dc] = actions[action];
+
+            let nr = pos.r + dr, nc = pos.c + dc;
+            if (nr < 0 || nr >= dqnRows || nc < 0 || nc >= dqnCols || isWall(nr, nc)) {
+                nr = pos.r; nc = pos.c;
+            }
+
+            const reward = (nr === dqnGoal.r && nc === dqnGoal.c) ? 10 : -0.1;
+
+            // Store transition in replay buffer
+            dqnState.buffer.push({ s: pos, a: action, r: reward, s2: {r: nr, c: nc} });
+            if (dqnState.buffer.length > 1000) dqnState.buffer.shift();
+
+            // Sample from buffer and update (simulating experience replay)
+            if (dqnState.buffer.length >= 10) {
+                for (let i = 0; i < 5; i++) {
+                    const idx = Math.floor(Math.random() * dqnState.buffer.length);
+                    const t = dqnState.buffer[idx];
+
+                    const maxNextQ = (t.s2.r === dqnGoal.r && t.s2.c === dqnGoal.c) ? 0 : getMaxQ(dqnState.Q, t.s2.r, t.s2.c);
+                    const oldQ = getQ(dqnState.Q, t.s.r, t.s.c, t.a);
+                    const newQ = oldQ + alpha * (t.r + viGamma * maxNextQ - oldQ);
+                    setQ(dqnState.Q, t.s.r, t.s.c, t.a, newQ);
+                }
+            }
+
+            if (nr === dqnGoal.r && nc === dqnGoal.c) {
+                dqnState.agentPos = null;
+                return true;
+            } else {
+                dqnState.agentPos = { r: nr, c: nc };
+                return false;
+            }
+        }
+
+        async function dqnTrain() {
+            const log = document.getElementById('dqn-log');
+
+            for (let ep = 0; ep < 50; ep++) {
+                dqnState.agentPos = { ...dqnStart };
+                let episodeReward = 0;
+                let steps = 0;
+
+                while (!dqnStep() && steps < 200) {
+                    episodeReward += dqnState.buffer[dqnState.buffer.length - 1].r;
+                    steps++;
+                }
+
+                episodeReward += 10; // Goal reward
+                dqnState.episodes++;
+                dqnState.rewards.push(episodeReward);
+
+                const avgReward = dqnState.rewards.slice(-10).reduce((a, b) => a + b) / Math.min(10, dqnState.rewards.length);
+
+                document.getElementById('dqn-episodes').textContent = dqnState.episodes;
+                document.getElementById('dqn-avg-reward').textContent = avgReward.toFixed(2);
+                document.getElementById('dqn-buffer-size').textContent = dqnState.buffer.length;
+                document.getElementById('dqn-progress').style.width = ((ep + 1) / 50 * 100) + '%';
+
+                log.innerHTML = `<div class="log-entry">Episode ${dqnState.episodes}: Reward=${episodeReward.toFixed(1)}, Steps=${steps}, ε=${(Math.max(0.1, 1 - dqnState.episodes / 50)).toFixed(2)}</div>` + log.innerHTML;
+                if (log.children.length > 15) log.removeChild(log.lastChild);
+
+                renderDQNGrid();
+                await new Promise(r => setTimeout(r, 50));
+            }
+        }
+
+        async function dqnTest() {
+            dqnState.agentPos = { ...dqnStart };
+            renderDQNGrid();
+
+            let steps = 0;
+            while (!(dqnState.agentPos.r === dqnGoal.r && dqnState.agentPos.c === dqnGoal.c) && steps < 100) {
+                const pos = dqnState.agentPos;
+                const action = getBestActionFromQ(dqnState.Q, pos.r, pos.c);
+
+                const actions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+                const [dr, dc] = actions[action];
+
+                let nr = pos.r + dr, nc = pos.c + dc;
+                if (nr < 0 || nr >= dqnRows || nc < 0 || nc >= dqnCols || isWall(nr, nc)) {
+                    nr = pos.r; nc = pos.c;
+                }
+
+                dqnState.agentPos = { r: nr, c: nc };
+                renderDQNGrid();
+                await new Promise(r => setTimeout(r, 200));
+                steps++;
+            }
+
+            const log = document.getElementById('dqn-log');
+            log.innerHTML = `<div class="log-entry reward-positive">Test: Reached goal in ${steps} steps!</div>` + log.innerHTML;
+        }
+
+        // Initialize first tab
+        viReset();
+        piReset();
+    </script>
+</body>
+</html>
